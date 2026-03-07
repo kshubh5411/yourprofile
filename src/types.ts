@@ -1,0 +1,145 @@
+export interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+}
+
+export interface PersonalInfo {
+  fullName: string;
+  dob: string;
+  gender: string;
+  maritalStatus: string;
+  height: string;
+  complexion: string;
+  languages: string;
+  hobbies: string;
+  contact: string;
+  email: string;
+  address: string;
+  customFields: CustomField[];
+}
+
+export interface FamilyInfo {
+  fatherName: string;
+  fatherOccupation: string;
+  motherName: string;
+  motherOccupation: string;
+  siblings: string;
+  familyType: string; // Nuclear/Joint
+  nativePlace: string;
+  customFields: CustomField[];
+}
+
+export interface EducationInfo {
+  highestQualification: string;
+  college: string;
+  school: string;
+  additionalSkills: string;
+  customFields: CustomField[];
+}
+
+export interface ProfessionalInfo {
+  occupation: string;
+  company: string;
+  income: string;
+  experience: string;
+  customFields: CustomField[];
+}
+
+export interface PartnerPreferencesInfo {
+  summary: string;
+  customFields: CustomField[];
+}
+
+export interface CustomizationOptions {
+  primaryColor: string;
+  backgroundColor: string;
+  fontFamily: string;
+  photoLayout?: 'grid' | 'slideshow';
+  sectionVisibility: {
+    personal: boolean;
+    family: boolean;
+    education: boolean;
+    professional: boolean;
+    partnerPreferences: boolean;
+  };
+}
+
+export interface Biodata {
+  personal: PersonalInfo;
+  family: FamilyInfo;
+  education: EducationInfo;
+  professional: ProfessionalInfo;
+  partnerPreferences: PartnerPreferencesInfo;
+  templateId: string;
+  country: string; // Country code
+  language: string; // Target language for generation
+  images: string[]; // Array of base64 image strings
+  profileImage?: string; // Base64 string for profile picture
+  profileImageCrop?: { x: number; y: number; width: number; height: number }; // Crop area
+  customization: CustomizationOptions;
+}
+
+export const initialBiodata: Biodata = {
+  personal: {
+    fullName: "Aarav Sharma",
+    dob: "1995-08-15",
+    gender: "Male",
+    maritalStatus: "Single",
+    height: "5'11\"",
+    complexion: "Fair",
+    languages: "English, Hindi, Punjabi",
+    hobbies: "Photography, Trekking, Reading",
+    contact: "+91 98765 43210",
+    email: "aarav.sharma@example.com",
+    address: "42, Green Park Extension, New Delhi, India",
+    customFields: [],
+  },
+  family: {
+    fatherName: "Rajesh Sharma",
+    fatherOccupation: "Businessman (Textiles)",
+    motherName: "Sunita Sharma",
+    motherOccupation: "Homemaker",
+    siblings: "1 Younger Sister (Studying)",
+    familyType: "Nuclear",
+    nativePlace: "Jaipur, Rajasthan",
+    customFields: [],
+  },
+  education: {
+    highestQualification: "MBA (Marketing)",
+    college: "IIM Bangalore",
+    school: "DPS RK Puram",
+    additionalSkills: "Digital Marketing, Public Speaking",
+    customFields: [],
+  },
+  professional: {
+    occupation: "Senior Marketing Manager",
+    company: "TechGlobal Solutions",
+    income: "24 LPA",
+    experience: "5 Years",
+    customFields: [],
+  },
+  partnerPreferences: {
+    summary: "Looking for a kind, educated, and family-oriented partner who values mutual respect and open communication. Preference for someone with a balanced approach to career and family life. Compatibility in values, lifestyle, and long-term goals is important.",
+    customFields: [],
+  },
+  templateId: "classic",
+  country: "IN",
+  language: "English",
+  images: [],
+  profileImage: undefined,
+  profileImageCrop: undefined,
+  customization: {
+    primaryColor: "#92400e", // amber-800 default for classic
+    backgroundColor: "#ffffff",
+    fontFamily: "serif",
+    photoLayout: 'grid',
+    sectionVisibility: {
+      personal: true,
+      family: true,
+      education: true,
+      professional: true,
+      partnerPreferences: true,
+    },
+  },
+};

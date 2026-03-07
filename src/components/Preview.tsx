@@ -1,0 +1,41 @@
+import React from 'react';
+import { Biodata } from '../types';
+import { TranslationLabels } from '../constants/translations';
+import { ClassicTemplate } from './templates/ClassicTemplate';
+import { ModernTemplate } from './templates/ModernTemplate';
+import { CreativeTemplate } from './templates/CreativeTemplate';
+
+interface PreviewProps {
+  data: Biodata;
+  templateId: string;
+  labels: TranslationLabels;
+}
+
+export const Preview = React.forwardRef<HTMLDivElement, PreviewProps>(({ data, templateId, labels }, ref) => {
+  const renderTemplate = () => {
+    switch (templateId) {
+      case 'creative':
+        return <CreativeTemplate data={data} labels={labels} />;
+      case 'modern':
+        return <ModernTemplate data={data} labels={labels} />;
+      case 'classic':
+      default:
+        return <ClassicTemplate data={data} labels={labels} />;
+    }
+  };
+
+  return (
+    <div className="w-full h-full bg-gray-100 p-2 sm:p-4 lg:p-8 overflow-auto flex justify-center items-start print:p-0 print:bg-white print:block">
+      <div 
+        ref={ref}
+        data-preview-container="true"
+        className="bg-white shadow-2xl w-full max-w-[210mm] min-h-[297mm] flex-shrink-0 origin-top transition-transform duration-300 print:shadow-none print:transform-none print:w-full print:min-h-0 print:m-0"
+        style={{ pageBreakAfter: 'always' }}
+      >
+        {renderTemplate()}
+      </div>
+    </div>
+  );
+});
+
+Preview.displayName = 'Preview';
