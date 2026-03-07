@@ -43,19 +43,34 @@ function clampDeep(value: unknown): unknown {
   return out;
 }
 
-function getAllowedOrigins(): string[] {
+function getAllowedOrigins(req?: express.Request): string[] {
   const configured = process.env.APP_URL?.trim();
+  const extraOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+  const requestHost = req?.get('host');
+
   const origins = new Set<string>([
     'http://localhost:3000',
     'http://127.0.0.1:3000',
   ]);
+
   if (configured) origins.add(configured);
+  extraOrigins.forEach((origin) => origins.add(origin));
+  if (railwayDomain) origins.add(`https://${railwayDomain}`);
+  if (requestHost) {
+    origins.add(`https://${requestHost}`);
+    origins.add(`http://${requestHost}`);
+  }
+
   return Array.from(origins);
 }
 
-function isAllowedOrigin(origin: string | undefined): boolean {
+function isAllowedOrigin(origin: string | undefined, req?: express.Request): boolean {
   if (!origin) return true;
-  return getAllowedOrigins().includes(origin);
+  return getAllowedOrigins(req).includes(origin);
 }
 
 function applySecurityHeaders(res: express.Response) {
@@ -209,7 +224,7 @@ async function createApp() {
     next();
   });
   app.use('/api', (req, res, next) => {
-    if (!isAllowedOrigin(req.headers.origin)) {
+    if (!isAllowedOrigin(req.headers.origin, req)) {
       return res.status(403).send('Origin not allowed');
     }
     if (!enforceRateLimit(req, res)) return;
