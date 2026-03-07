@@ -242,8 +242,8 @@ async function createApp() {
     if (!isAllowedOrigin(req.headers.origin, req)) {
       return res.status(403).send('Origin not allowed');
     }
-    if (req.method !== 'POST') {
-      return res.status(405).send('Method not allowed');
+    if (req.method === 'GET' && req.path === '/health') {
+      return res.status(200).json({ ok: true });
     }
     if (!enforceRateLimit(req, res)) return;
     return next();
