@@ -73,6 +73,17 @@ function isAllowedOrigin(origin: string | undefined, req?: express.Request): boo
   return getAllowedOrigins(req).includes(origin);
 }
 
+function setCorsHeaders(req: express.Request, res: express.Response) {
+  const origin = req.headers.origin;
+  if (origin && isAllowedOrigin(origin, req)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400');
+}
+
 function applySecurityHeaders(res: express.Response) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -224,8 +235,15 @@ async function createApp() {
     next();
   });
   app.use('/api', (req, res, next) => {
+    setCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') {
+      return res.status(204).end();
+    }
     if (!isAllowedOrigin(req.headers.origin, req)) {
       return res.status(403).send('Origin not allowed');
+    }
+    if (req.method !== 'POST') {
+      return res.status(405).send('Method not allowed');
     }
     if (!enforceRateLimit(req, res)) return;
     return next();
