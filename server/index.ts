@@ -242,11 +242,12 @@ async function createApp() {
     if (!isAllowedOrigin(req.headers.origin, req)) {
       return res.status(403).send('Origin not allowed');
     }
-    if (req.method === 'GET' && req.path === '/health') {
-      return res.status(200).json({ ok: true });
-    }
     if (!enforceRateLimit(req, res)) return;
     return next();
+  });
+
+  app.get('/api/health', (_req, res) => {
+    return res.status(200).json({ ok: true });
   });
 
   app.post('/api/translate-enhance', async (req, res) => {
@@ -401,6 +402,9 @@ ${JSON.stringify(dataForPrompt, null, 2)}
   } else {
     const distDir = path.resolve(rootDir, 'dist');
     app.use(express.static(distDir));
+    app.use('/api', (_req, res) => {
+      return res.status(404).json({ error: 'API route not found' });
+    });
     app.get('*', async (_req, res) => {
       const html = await readFile(path.join(distDir, 'index.html'), 'utf-8');
       res.status(200).contentType('text/html').send(html);
