@@ -119,45 +119,19 @@ export default function App() {
         format: 'a4',
       });
       
-      const imgWidthMm = 210; // A4 width in mm
-      const pageHeightMm = 297; // A4 height in mm
-      const pageHeightPx = Math.floor((canvas.width * pageHeightMm) / imgWidthMm);
+      const pageWidthMm = 210;
+      const pageHeightMm = 297;
+      const imgWidthMm = pageWidthMm;
+      const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
 
-      let sourceY = 0;
-      while (sourceY < canvas.height) {
-        const remainingPx = canvas.height - sourceY;
-        if (remainingPx <= 8) break;
-        const sliceHeightPx = Math.min(pageHeightPx, remainingPx);
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sliceHeightPx;
-
-        const pageCtx = pageCanvas.getContext('2d');
-        if (!pageCtx) {
-          throw new Error('Failed to create canvas context for PDF slicing');
-        }
-
-        pageCtx.drawImage(
-          canvas,
-          0,
-          sourceY,
-          canvas.width,
-          sliceHeightPx,
-          0,
-          0,
-          canvas.width,
-          sliceHeightPx
-        );
-
-        const sliceImgData = pageCanvas.toDataURL('image/png');
-        const sliceHeightMm = (sliceHeightPx * imgWidthMm) / canvas.width;
-        pdf.addImage(sliceImgData, 'PNG', 0, 0, imgWidthMm, sliceHeightMm);
-
-        sourceY += sliceHeightPx;
-        if (sourceY < canvas.height) {
-          pdf.addPage();
-        }
-      }
+      // Fit whole biodata into a single A4 page while preserving aspect ratio.
+      const scale = Math.min(1, pageHeightMm / imgHeightMm);
+      const renderWidth = imgWidthMm * scale;
+      const renderHeight = imgHeightMm * scale;
+      const offsetX = (pageWidthMm - renderWidth) / 2;
+      const offsetY = (pageHeightMm - renderHeight) / 2;
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderWidth, renderHeight);
       
       pdf.save('biodata.pdf');
     } catch (error) {
