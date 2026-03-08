@@ -1,5 +1,5 @@
 import React from 'react';
-import { Biodata } from '../../types';
+import { Biodata, CustomizationOptions } from '../../types';
 import { TranslationLabels } from '../../constants/translations';
 import clsx from 'clsx';
 
@@ -7,12 +7,13 @@ interface TemplateProps {
   data: Biodata;
   labels: TranslationLabels;
   className?: string;
+  updateCustomization: (field: keyof CustomizationOptions, value: any) => void;
 }
 
-export const ModernTemplate: React.FC<TemplateProps> = ({ data, labels, className }) => {
+export const ModernTemplate: React.FC<TemplateProps> = ({ data, labels, className, updateCustomization }) => {
   const { personal, family, education, professional, partnerPreferences, customization } = data;
   const { primaryColor, fontFamily, sectionVisibility } = customization;
-  const fontClass = fontFamily === 'mono' ? 'font-mono' : fontFamily === 'sans' ? 'font-sans' : 'font-serif';
+  const fontClass = fontFamily === 'mono' ? 'font-doc-mono' : fontFamily === 'sans' ? 'font-doc-sans' : 'font-doc-serif';
 
   return (
     <div className={clsx('w-full h-full bg-white flex text-gray-800', fontClass, className)}>
@@ -23,11 +24,11 @@ export const ModernTemplate: React.FC<TemplateProps> = ({ data, labels, classNam
             <img 
               src={data.profileImage} 
               alt="Profile" 
-              className="w-32 h-32 rounded-full object-cover border-4 border-white/30 shadow-sm"
+              className="w-28 h-28 rounded-full object-cover border-4 border-white/30 shadow-sm"
             />
           </div>
         )}
-        <div className="mb-8">
+        <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2">{personal.fullName || "Your Name"}</h1>
           <p className="opacity-80 text-sm uppercase tracking-wider">{professional.occupation || "Professional Title"}</p>
         </div>

@@ -44,7 +44,7 @@ const FormSection = ({
     <button
       onClick={onToggle}
       className={clsx(
-        "w-full flex items-center justify-between p-4 transition-colors text-left",
+        "w-full flex items-center justify-between p-4 sm:p-4 transition-colors text-left min-h-14",
         isDarkMode ? "hover:bg-slate-800" : "hover:bg-gray-50"
       )}
     >
@@ -54,7 +54,7 @@ const FormSection = ({
         </div>
         <span
           className={clsx(
-            "font-medium",
+            "font-semibold text-[15px]",
             isDarkMode
               ? (isOpen ? "text-slate-100" : "text-slate-300")
               : (isOpen ? "text-gray-900" : "text-gray-600")
@@ -76,7 +76,7 @@ const FormSection = ({
         {onAdd && (
           <button 
             onClick={onAdd}
-            className="w-full py-2 flex items-center justify-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-200 border-dashed mt-4"
+            className="w-full py-2.5 flex items-center justify-center gap-2 text-[15px] font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-200 border-dashed mt-4"
           >
             <Plus size={14} />
             Add Field
@@ -104,7 +104,7 @@ const InputField = ({
 }) => (
   <div className="relative group">
     <div className="flex justify-between items-center mb-1">
-      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</label>
+      <label className="block text-[11px] font-semibold text-gray-600">{label}</label>
       {onDelete && (
         <button 
           onClick={onDelete}
@@ -117,7 +117,7 @@ const InputField = ({
     </div>
     {type === 'textarea' ? (
       <textarea
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm"
+        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-[15px] leading-6"
         rows={3}
         value={value}
         onChange={onChange}
@@ -126,7 +126,7 @@ const InputField = ({
     ) : (
       <input
         type={type}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm"
+        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-[15px] leading-6"
         value={value}
         onChange={onChange}
         placeholder={placeholder}
@@ -157,14 +157,14 @@ const CustomFieldInput: React.FC<CustomFieldInputProps> = ({
     <div className="space-y-2">
       <input
         type="text"
-        className="w-full bg-transparent border-b border-gray-300 focus:border-indigo-500 focus:outline-none text-xs font-medium text-gray-700 placeholder-gray-400 pb-1"
+        className="w-full bg-transparent border-b border-gray-300 focus:border-indigo-500 focus:outline-none text-[12px] font-semibold text-gray-700 placeholder-gray-400 pb-1"
         value={field.label}
         onChange={(e) => onUpdate(field.id, 'label', e.target.value)}
         placeholder="Field Label"
       />
       <input
         type="text"
-        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm"
+        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-[15px] leading-6"
         value={field.value}
         onChange={(e) => onUpdate(field.id, 'value', e.target.value)}
         placeholder="Value"
@@ -254,12 +254,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className={clsx("p-6 border-b", isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50')}>
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h2 className={clsx("text-xl font-bold", isDarkMode ? 'text-slate-100' : 'text-gray-800')}>Biodata Editor</h2>
-            <p className={clsx("text-sm mt-1", isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Customize your profile</p>
+            <h2 className={clsx("text-2xl font-extrabold tracking-tight", isDarkMode ? 'text-slate-100' : 'text-gray-800')}>Biodata Editor</h2>
+            <p className={clsx("text-[15px] mt-1", isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Customize your profile</p>
           </div>
           <button 
             onClick={onLoadSample}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-md transition-colors"
+            className="text-[13px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-md transition-colors"
             title="Load Sample Data"
           >
             <Sparkles size={12} />
@@ -271,7 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={() => setActiveTab('content')}
             className={clsx(
-              "flex-1 py-1.5 text-sm font-medium rounded-md transition-all",
+              "flex-1 py-2 text-[15px] font-semibold rounded-md transition-all",
               activeTab === 'content'
                 ? isDarkMode
                   ? "bg-slate-900 text-white shadow-sm"
@@ -286,7 +286,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={() => setActiveTab('design')}
             className={clsx(
-              "flex-1 py-1.5 text-sm font-medium rounded-md transition-all",
+              "flex-1 py-2 text-[15px] font-semibold rounded-md transition-all",
               activeTab === 'design'
                 ? isDarkMode
                   ? "bg-slate-900 text-white shadow-sm"
@@ -326,20 +326,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </label>
                 </div>
                 {data.profileImage && (
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 flex-wrap justify-center">
                     <button 
                       onClick={() => {
                         setTempProfileImage(data.profileImage || null);
                         setIsCropping(true);
                       }}
-                      className="text-xs flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 font-medium bg-indigo-50 px-3 py-1.5 rounded-full transition-colors"
+                      className="text-[13px] flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 font-semibold bg-indigo-50 px-3 py-2 rounded-full transition-colors"
                     >
                       <CropIcon size={14} />
                       Crop / Edit
                     </button>
                     <button 
                       onClick={() => onUpdateProfileImage(undefined)}
-                      className="text-xs flex items-center gap-1.5 text-red-500 hover:text-red-700 font-medium bg-red-50 px-3 py-1.5 rounded-full transition-colors"
+                      className="text-[13px] flex items-center gap-1.5 text-red-500 hover:text-red-700 font-semibold bg-red-50 px-3 py-2 rounded-full transition-colors"
                     >
                       <Trash2 size={14} />
                       Remove
@@ -347,7 +347,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 )}
                 {!data.profileImage && (
-                  <label className="text-xs font-medium text-indigo-600 hover:text-indigo-800 cursor-pointer bg-indigo-50 px-4 py-2 rounded-lg transition-colors border border-indigo-100">
+                  <label className="text-[13px] font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer bg-indigo-50 px-4 py-2.5 rounded-lg transition-colors border border-indigo-100">
                     Upload Photo
                     <input type="file" accept="image/*" className="hidden" onChange={handleProfileImageUpload} />
                   </label>
@@ -364,11 +364,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isDarkMode={isDarkMode}
             >
               <InputField label={labels.fullName} value={data.personal.fullName} onChange={(e) => onUpdate('personal', 'fullName', e.target.value)} placeholder="e.g. John Doe" onDelete={() => onUpdate('personal', 'fullName', '')} />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <InputField label={labels.dob} type="date" value={data.personal.dob} onChange={(e) => onUpdate('personal', 'dob', e.target.value)} onDelete={() => onUpdate('personal', 'dob', '')} />
                 <InputField label={labels.gender} value={data.personal.gender} onChange={(e) => onUpdate('personal', 'gender', e.target.value)} placeholder="e.g. Male" onDelete={() => onUpdate('personal', 'gender', '')} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <InputField label={labels.height} value={data.personal.height} onChange={(e) => onUpdate('personal', 'height', e.target.value)} placeholder="e.g. 5 ft 10 in" onDelete={() => onUpdate('personal', 'height', '')} />
                 <InputField label={labels.complexion} value={data.personal.complexion} onChange={(e) => onUpdate('personal', 'complexion', e.target.value)} placeholder="e.g. Fair" onDelete={() => onUpdate('personal', 'complexion', '')} />
               </div>
