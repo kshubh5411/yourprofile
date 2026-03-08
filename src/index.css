@@ -323,6 +323,14 @@
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
+    [data-preview-container="true"] {
+      height: auto !important;
+      overflow: visible !important;
+    }
+    [data-preview-container="true"] section {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
   }
 
   @media (max-width: 768px) {

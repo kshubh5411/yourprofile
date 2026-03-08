@@ -24,12 +24,12 @@ export const CreativeTemplate: React.FC<TemplateProps> = ({ data, labels, classN
   };
 
   return (
-    <div className={clsx('w-full h-full bg-white text-gray-800 relative overflow-hidden', fontClass, className)}>
+    <div className={clsx('w-full h-full bg-white text-gray-800 relative overflow-hidden print:h-auto print:overflow-visible', fontClass, className)}>
       {/* Decorative Background Elements */}
       <div className="absolute top-0 right-0 w-64 h-64 rounded-bl-full -z-0 opacity-20" style={{ backgroundColor: primaryColor }} />
       <div className="absolute bottom-0 left-0 w-48 h-48 rounded-tr-full -z-0 opacity-10" style={{ backgroundColor: primaryColor }} />
 
-      <div className="relative z-10 p-10 h-full flex flex-col">
+      <div className="relative z-10 p-10 h-full flex flex-col print:h-auto">
         {/* Header */}
         <header className="flex justify-between items-end mb-12 border-b-4 pb-6" style={{ borderColor: primaryColor }}>
           <div className="flex items-center gap-6">
@@ -53,7 +53,7 @@ export const CreativeTemplate: React.FC<TemplateProps> = ({ data, labels, classN
           </div>
         </header>
 
-        <div className="grid grid-cols-12 gap-8 flex-1">
+        <div className="grid grid-cols-12 gap-8 flex-1 print:flex-none">
           {/* Left Column */}
           <div className="col-span-4 space-y-8 border-r border-gray-100 pr-8">
             {sectionVisibility.personal && (

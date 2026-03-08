@@ -308,6 +308,7 @@ export const useBioData = () => {
         godLogoPositions: data.customization.godLogoPositions || {},
         godLogoSize: data.customization.godLogoSize || 24,
         godLogoOpacity: data.customization.godLogoOpacity ?? 0.75,
+        sectionOrder: data.customization.sectionOrder || ['personal', 'family', 'educationCareer', 'partnerPreferences', 'contact'],
         sectionVisibility: {
           personal: true,
           family: true,

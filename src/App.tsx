@@ -59,80 +59,152 @@ export default function App() {
 
   const handlePrint = async () => {
     if (!componentRef.current) return;
-    
     setIsPrinting(true);
     try {
-      const element = componentRef.current;
+      const source = componentRef.current;
       await document.fonts.ready;
 
+      const rect = source.getBoundingClientRect();
+      const exportTemplate = source.querySelector('[data-export-template]') as HTMLElement | null;
+      const isClassicTemplate = exportTemplate?.getAttribute('data-export-template') === 'classic';
+      const desktopA4WidthPx = 794; // 210mm at 96dpi
+      const captureWidth = isClassicTemplate
+        ? desktopA4WidthPx
+        : Math.max(1, Math.round(rect.width));
+      const captureHeight = isClassicTemplate
+        ? Math.max(source.scrollHeight, source.offsetHeight, 1123)
+        : Math.max(1, Math.round(rect.height));
+      const bleed = 6;
       const sandbox = document.createElement('div');
       sandbox.setAttribute('data-pdf-sandbox', 'true');
       sandbox.style.position = 'fixed';
       sandbox.style.left = '-100000px';
       sandbox.style.top = '0';
-      sandbox.style.width = '210mm';
+      sandbox.style.width = `${captureWidth + bleed * 2}px`;
+      sandbox.style.height = `${captureHeight + bleed * 2}px`;
       sandbox.style.background = '#ffffff';
-      sandbox.style.zIndex = '-1';
       sandbox.style.pointerEvents = 'none';
+      sandbox.style.zIndex = '-1';
+      sandbox.style.padding = `${bleed}px`;
 
-      const exportElement = element.cloneNode(true) as HTMLElement;
-      exportElement.style.width = '210mm';
-      exportElement.style.maxWidth = '210mm';
-      exportElement.style.minHeight = '297mm';
-      exportElement.style.margin = '0';
-      exportElement.style.transform = 'none';
-      exportElement.style.boxShadow = 'none';
-      exportElement.style.background = '#ffffff';
-      sandbox.appendChild(exportElement);
+      const clone = source.cloneNode(true) as HTMLElement;
+      clone.style.width = `${captureWidth}px`;
+      clone.style.minHeight = `${captureHeight}px`;
+      clone.style.height = 'auto';
+      clone.style.margin = '0';
+      clone.style.transform = 'none';
+      clone.style.boxShadow = 'none';
+      clone.style.background = '#ffffff';
+      sandbox.appendChild(clone);
       document.body.appendChild(sandbox);
 
-      const allElements = exportElement.querySelectorAll('*');
-      allElements.forEach((el) => {
-        const style = (el as HTMLElement).style;
-        style.boxShadow = 'none';
-        style.textShadow = 'none';
-        style.filter = 'none';
+      const sourceNodes = [source, ...Array.from(source.querySelectorAll('*'))] as HTMLElement[];
+      const cloneNodes = [clone, ...Array.from(clone.querySelectorAll('*'))] as HTMLElement[];
+      const count = Math.min(sourceNodes.length, cloneNodes.length);
+      for (let i = 0; i < count; i += 1) {
+        const src = sourceNodes[i];
+        const dst = cloneNodes[i];
+        const computed = window.getComputedStyle(src);
+        for (let p = 0; p < computed.length; p += 1) {
+          const prop = computed[p];
+          const val = computed.getPropertyValue(prop);
+          if (!val) continue;
+          if (/oklab|oklch|color-mix/i.test(val)) continue;
+          dst.style.setProperty(prop, val);
+        }
+        dst.removeAttribute('class');
+      }
+      clone.style.transform = 'none';
+      clone.style.transformOrigin = 'top left';
+
+      if (isClassicTemplate) {
+        const personalLayouts = Array.from(
+          clone.querySelectorAll('[data-export-personal-layout="true"]')
+        ) as HTMLElement[];
+        personalLayouts.forEach((layout) => {
+          layout.style.display = 'grid';
+          layout.style.gridTemplateColumns = '1fr auto';
+          layout.style.columnGap = '1rem';
+          layout.style.rowGap = '0.75rem';
+          layout.style.alignItems = 'start';
+        });
+
+        const detailsGrids = Array.from(
+          clone.querySelectorAll('[data-export-details-grid="true"]')
+        ) as HTMLElement[];
+        detailsGrids.forEach((grid) => {
+          grid.style.display = 'grid';
+          grid.style.gridTemplateColumns = 'minmax(150px,0.95fr) minmax(0,1.5fr)';
+          grid.style.columnGap = '1rem';
+          grid.style.rowGap = '0.5rem';
+        });
+
+        const profileWraps = Array.from(
+          clone.querySelectorAll('[data-export-profile-image-wrap="true"]')
+        ) as HTMLElement[];
+        profileWraps.forEach((wrap) => {
+          wrap.style.justifySelf = 'end';
+          wrap.style.alignSelf = 'start';
+        });
+      }
+
+      // PDF-only pill rendering: SVG guarantees exact centered text.
+      const clonedPills = Array.from(clone.querySelectorAll('[data-pill-text]')) as HTMLElement[];
+      clonedPills.forEach((pill) => {
+        const text = (pill.getAttribute('data-pill-text') || pill.textContent || '').trim();
+        if (!text) return;
+
+        const rect = pill.getBoundingClientRect();
+        const width = Math.max(220, Math.round(rect.width));
+        const height = Math.max(36, Math.round(rect.height));
+        const bg = window.getComputedStyle(pill).backgroundColor || '#92400e';
+        const radius = Math.floor(height / 2);
+        const measureCanvas = document.createElement('canvas');
+        const measureCtx = measureCanvas.getContext('2d');
+        let fontSize = Math.max(13, Math.min(18, Math.floor(height * 0.5)));
+        if (measureCtx) {
+          const family = 'Arial, Helvetica, sans-serif';
+          const maxTextWidth = width - 36;
+          measureCtx.font = `800 ${fontSize}px ${family}`;
+          while (fontSize > 11 && measureCtx.measureText(text).width > maxTextWidth) {
+            fontSize -= 1;
+            measureCtx.font = `800 ${fontSize}px ${family}`;
+          }
+        }
+
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('width', String(width));
+        svg.setAttribute('height', String(height));
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        svg.style.display = 'block';
+
+        const shape = document.createElementNS(svgNS, 'rect');
+        shape.setAttribute('x', '0');
+        shape.setAttribute('y', '0');
+        shape.setAttribute('width', String(width));
+        shape.setAttribute('height', String(height));
+        shape.setAttribute('rx', String(radius));
+        shape.setAttribute('fill', bg);
+
+        const label = document.createElementNS(svgNS, 'text');
+        label.setAttribute('x', '50%');
+        label.setAttribute('y', '50%');
+        label.setAttribute('dy', '0.08em');
+        label.setAttribute('dominant-baseline', 'middle');
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('fill', '#ffffff');
+        label.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+        label.setAttribute('font-size', String(fontSize));
+        label.setAttribute('font-weight', '800');
+        label.textContent = text;
+
+        svg.appendChild(shape);
+        svg.appendChild(label);
+        pill.replaceWith(svg);
       });
 
-      const pdfSafePills = exportElement.querySelectorAll('.pdf-safe-pill');
-      pdfSafePills.forEach((el) => {
-        const style = (el as HTMLElement).style;
-        style.fontFamily = 'Arial, Helvetica, sans-serif';
-        style.letterSpacing = '0';
-        style.fontKerning = 'none';
-        style.fontVariantLigatures = 'none';
-        style.fontFeatureSettings = '"kern" 0, "liga" 0, "clig" 0';
-        style.fontWeight = '800';
-        style.textTransform = 'none';
-        style.wordSpacing = '0';
-        style.whiteSpace = 'nowrap';
-      });
-
-      const pdfSafeWords = exportElement.querySelectorAll('.pdf-safe-pill-word');
-      pdfSafeWords.forEach((el) => {
-        const style = (el as HTMLElement).style;
-        style.display = 'inline-block';
-        style.letterSpacing = '0';
-        style.wordSpacing = '0';
-      });
-
-      const classicHeaderShells = exportElement.querySelectorAll('.classic-header-shell');
-      classicHeaderShells.forEach((el) => {
-        (el as HTMLElement).style.minHeight = '108px';
-      });
-      const classicHeaderBlocks = exportElement.querySelectorAll('.classic-header-draggable');
-      classicHeaderBlocks.forEach((el) => {
-        const style = (el as HTMLElement).style;
-        style.position = 'relative';
-        style.left = '0';
-        style.top = '0';
-        style.transform = 'none';
-        style.marginLeft = 'auto';
-        style.marginRight = 'auto';
-        style.textAlign = 'center';
-      });
-
-      const images = Array.from(exportElement.querySelectorAll('img')) as HTMLImageElement[];
+      const images = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
       await Promise.all(
         images.map((img) => {
           if (img.complete && img.naturalWidth > 0) return Promise.resolve();
@@ -144,48 +216,35 @@ export default function App() {
         })
       );
 
-      const canvas = await html2canvas(exportElement, {
-        scale: 3,
+      const canvas = await html2canvas(clone, {
+        scale: 2,
         useCORS: true,
-        imageTimeout: 20000,
         logging: false,
         backgroundColor: '#ffffff',
-        width: exportElement.scrollWidth,
-        height: exportElement.scrollHeight,
-        windowWidth: exportElement.scrollWidth,
-        windowHeight: exportElement.scrollHeight,
       });
-      document.body.removeChild(sandbox);
-      
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-      
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageWidthMm = 210;
       const pageHeightMm = 297;
-      const imgWidthMm = pageWidthMm;
-      const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
-
-      // Fit whole biodata into a single A4 page while preserving aspect ratio.
-      const scale = Math.min(1, pageHeightMm / imgHeightMm);
-      const renderWidth = imgWidthMm * scale;
-      const renderHeight = imgHeightMm * scale;
-      const offsetX = (pageWidthMm - renderWidth) / 2;
-      const offsetY = (pageHeightMm - renderHeight) / 2;
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderWidth, renderHeight);
-      
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const safeMarginMm = 6;
+      const usableWidthMm = pageWidthMm - safeMarginMm * 2;
+      const usableHeightMm = pageHeightMm - safeMarginMm * 2;
+      const fullWidthMm = usableWidthMm;
+      const fullHeightMm = (canvas.height * fullWidthMm) / canvas.width;
+      const fitScale = Math.min(1, usableHeightMm / fullHeightMm);
+      const renderWidthMm = fullWidthMm * fitScale;
+      const renderHeightMm = fullHeightMm * fitScale;
+      const offsetX = safeMarginMm + (usableWidthMm - renderWidthMm) / 2;
+      const offsetY = safeMarginMm + (usableHeightMm - renderHeightMm) / 2;
+      pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderWidthMm, renderHeightMm);
       pdf.save('biodata.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
     } finally {
-      const leftoverSandbox = document.querySelector('[data-pdf-sandbox="true"]');
-      if (leftoverSandbox?.parentElement) {
-        leftoverSandbox.parentElement.removeChild(leftoverSandbox);
-      }
+      const sandbox = document.querySelector('[data-pdf-sandbox="true"]');
+      if (sandbox?.parentElement) sandbox.parentElement.removeChild(sandbox);
       setIsPrinting(false);
     }
   };
@@ -338,7 +397,7 @@ export default function App() {
       {/* Main Content - Preview & Toolbar */}
       <div
         className={clsx(
-          'flex-1 flex-col min-h-0 relative',
+          'flex-1 flex-col min-h-0 relative print:flex',
           mobilePanel === 'preview' ? 'flex' : 'hidden lg:flex'
         )}
       >
