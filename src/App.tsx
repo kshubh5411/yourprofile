@@ -408,6 +408,16 @@ export default function App() {
   }, [data.country, data.language, setLanguage]);
 
   const showTopError = sharedLoadError || error;
+  const madeByFooter = (
+    <div
+      className={clsx(
+        "fixed bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-medium px-2 py-1 rounded-md print:hidden z-40 pointer-events-none",
+        isDarkMode ? "text-slate-300 bg-slate-900/80" : "text-slate-600 bg-white/90 border border-slate-200"
+      )}
+    >
+      Made by Shubham at bottom with love
+    </div>
+  );
 
   if (isLoadingShared) {
     return (
@@ -566,6 +576,7 @@ export default function App() {
             </div>
           </section>
         </main>
+        {madeByFooter}
       </div>
     );
   }
@@ -622,6 +633,7 @@ export default function App() {
             </div>
           </div>
         </div>
+        {madeByFooter}
       </div>
     );
   }
@@ -955,6 +967,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      {madeByFooter}
     </div>
   );
 }
