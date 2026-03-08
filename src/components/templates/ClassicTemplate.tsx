@@ -254,7 +254,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
     <div
       data-export-template="classic"
       className={clsx(
-        'relative w-full h-full p-6 text-gray-900 overflow-hidden print:h-auto print:overflow-visible',
+        'relative w-full min-h-[297mm] p-6 text-gray-900 overflow-hidden print:min-h-[297mm] print:overflow-visible',
         fontClass,
         className,
         framePreset.backgroundClass,

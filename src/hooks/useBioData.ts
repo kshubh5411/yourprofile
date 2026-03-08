@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Biodata, initialBiodata } from '../types';
 import { generatePartnerPreferences, translateAndEnhance } from '../services/ai';
 import { translations, defaultLabels, TranslationLabels } from '../constants/translations';
@@ -244,7 +244,8 @@ export const useBioData = () => {
     }
   };
 
-  const loadSampleData = () => {
+  const loadSampleData = (templateOverride?: string) => {
+    const nextTemplate = templateOverride || data.templateId;
     setData({
       personal: {
         fullName: "Aarav Sharma",
@@ -284,16 +285,16 @@ export const useBioData = () => {
         summary: "Looking for a kind, educated, and family-oriented partner who values mutual respect and open communication. Preference for someone with a balanced approach to career and family life. Compatibility in values, lifestyle, and long-term goals is important.",
         customFields: [],
       },
-      templateId: data.templateId,
+      templateId: nextTemplate,
       country: data.country,
       language: data.language,
       images: [],
       profileImage: data.profileImage,
       profileImageCrop: data.profileImageCrop,
       customization: {
-        primaryColor: data.templateId === 'modern' ? '#0f172a' : data.templateId === 'creative' ? '#10b981' : '#92400e',
+        primaryColor: nextTemplate === 'modern' ? '#0f172a' : nextTemplate === 'creative' ? '#10b981' : '#92400e',
         backgroundColor: '#ffffff',
-        fontFamily: data.templateId === 'modern' ? 'sans' : 'serif',
+        fontFamily: nextTemplate === 'modern' ? 'sans' : 'serif',
         classicVariant: data.customization.classicVariant || 'centered',
         classicFrameStyle: data.customization.classicFrameStyle || 'royal',
         classicHeaderText: data.customization.classicHeaderText || 'ॐ श्री गणेशाय नमः',
@@ -320,6 +321,28 @@ export const useBioData = () => {
     });
   };
 
+  const replaceData = useCallback((next: Biodata) => {
+    const merged: Biodata = {
+      ...initialBiodata,
+      ...next,
+      personal: { ...initialBiodata.personal, ...next.personal },
+      family: { ...initialBiodata.family, ...next.family },
+      education: { ...initialBiodata.education, ...next.education },
+      professional: { ...initialBiodata.professional, ...next.professional },
+      partnerPreferences: { ...initialBiodata.partnerPreferences, ...next.partnerPreferences },
+      customization: {
+        ...initialBiodata.customization,
+        ...next.customization,
+        sectionVisibility: {
+          ...initialBiodata.customization.sectionVisibility,
+          ...(next.customization?.sectionVisibility || {}),
+        },
+      },
+    };
+    prevLanguageRef.current = merged.language;
+    setData(merged);
+  }, []);
+
   return {
     data,
     labels,
@@ -338,6 +361,7 @@ export const useBioData = () => {
     handleAiEnhance,
     handleGeneratePartnerPreferences,
     loadSampleData,
+    replaceData,
     isGenerating,
     isGeneratingPartnerPreferences,
     error,
