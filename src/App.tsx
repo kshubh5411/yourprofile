@@ -67,6 +67,102 @@ export default function App() {
   const readOnlyUpdateCustomization = React.useCallback(() => undefined, []);
 
   React.useEffect(() => {
+    const origin = window.location.origin || 'https://yourprofile-production.up.railway.app';
+    const path = window.location.pathname || '/';
+    const absoluteUrl = `${origin}${path}`;
+
+    const seoByRoute = isSharedView
+      ? {
+        title: 'Shared Biodata - View Profile | YourProfile',
+        description: 'View a shared matrimonial biodata profile on YourProfile.',
+        robots: 'noindex,nofollow',
+        keywords: 'shared biodata, matrimonial profile',
+      }
+      : !isEditorRoute
+        ? {
+          title: 'YourProfile - Matrimonial Biodata Maker & PDF Generator',
+          description:
+            'Create matrimonial biodata in minutes with YourProfile. AI-powered editing, multilingual support, beautiful templates, and instant PDF download.',
+          robots: 'index,follow',
+          keywords:
+            'matrimonial biodata maker, biodata for marriage, marriage biodata pdf, biodata format, biodata generator',
+        }
+        : {
+          title: 'Biodata Editor - Create Matrimonial Biodata PDF | YourProfile',
+          description:
+            'Use the YourProfile editor to build and customize your matrimonial biodata, then export as high-quality PDF.',
+          robots: 'index,follow',
+          keywords:
+            'biodata editor, biodata pdf maker, matrimonial biodata editor, marriage biodata creator',
+        };
+
+    document.title = seoByRoute.title;
+
+    const setMeta = (selector: string, attr: 'name' | 'property', key: string, content: string) => {
+      let node = document.head.querySelector(selector) as HTMLMetaElement | null;
+      if (!node) {
+        node = document.createElement('meta');
+        node.setAttribute(attr, key);
+        document.head.appendChild(node);
+      }
+      node.setAttribute('content', content);
+    };
+
+    setMeta('meta[name="description"]', 'name', 'description', seoByRoute.description);
+    setMeta('meta[name="keywords"]', 'name', 'keywords', seoByRoute.keywords);
+    setMeta('meta[name="robots"]', 'name', 'robots', seoByRoute.robots);
+    setMeta('meta[property="og:title"]', 'property', 'og:title', seoByRoute.title);
+    setMeta('meta[property="og:description"]', 'property', 'og:description', seoByRoute.description);
+    setMeta('meta[property="og:url"]', 'property', 'og:url', absoluteUrl);
+    setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', seoByRoute.title);
+    setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', seoByRoute.description);
+
+    let canonical = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', absoluteUrl);
+
+    const schema = !isEditorRoute
+      ? {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'YourProfile',
+        url: origin,
+        description: 'AI-powered matrimonial biodata studio with instant PDF export.',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${origin}/editor`,
+          'query-input': 'required name=search_term_string',
+        },
+      }
+      : {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'YourProfile Biodata Editor',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        url: absoluteUrl,
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'INR',
+        },
+      };
+
+    let schemaScript = document.head.querySelector('#seo-json-ld') as HTMLScriptElement | null;
+    if (!schemaScript) {
+      schemaScript = document.createElement('script');
+      schemaScript.id = 'seo-json-ld';
+      schemaScript.type = 'application/ld+json';
+      document.head.appendChild(schemaScript);
+    }
+    schemaScript.textContent = JSON.stringify(schema);
+  }, [isEditorRoute, isSharedView]);
+
+  React.useEffect(() => {
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
