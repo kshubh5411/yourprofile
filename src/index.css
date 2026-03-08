@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Merriweather:wght@400;700;900&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -272,7 +273,47 @@
   --color-rose-950: #4c0519;
 }
 
+@layer base {
+  :root {
+    --font-ui: "Plus Jakarta Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-doc-serif: "Merriweather", "Georgia", serif;
+    --font-doc-sans: "Source Sans 3", "Segoe UI", sans-serif;
+    --font-doc-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  }
+
+  body {
+    font-family: var(--font-ui);
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+  }
+}
+
 @layer utilities {
+  .font-doc-serif {
+    font-family: var(--font-doc-serif);
+  }
+
+  .font-doc-sans {
+    font-family: var(--font-doc-sans);
+  }
+
+  .font-doc-mono {
+    font-family: var(--font-doc-mono);
+  }
+
+  /* Stabilize section-title rendering in html2canvas/jsPDF export. */
+  .pdf-safe-pill {
+    letter-spacing: 0;
+    font-kerning: none;
+    font-feature-settings: "kern" 0, "liga" 0, "clig" 0;
+    font-variant-ligatures: none;
+    text-rendering: geometricPrecision;
+  }
+
+  .pdf-safe-pill-word {
+    display: inline-block;
+  }
+
   @media print {
     @page {
       size: A4;
@@ -281,6 +322,15 @@
     body {
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
+    }
+  }
+
+  @media (max-width: 768px) {
+    input,
+    select,
+    textarea,
+    button {
+      font-size: 16px;
     }
   }
 }

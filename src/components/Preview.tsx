@@ -1,5 +1,5 @@
 import React from 'react';
-import { Biodata } from '../types';
+import { Biodata, CustomizationOptions } from '../types';
 import { TranslationLabels } from '../constants/translations';
 import { ClassicTemplate } from './templates/ClassicTemplate';
 import { ModernTemplate } from './templates/ModernTemplate';
@@ -9,18 +9,20 @@ interface PreviewProps {
   data: Biodata;
   templateId: string;
   labels: TranslationLabels;
+  updateCustomization: (field: keyof CustomizationOptions, value: any) => void;
 }
 
-export const Preview = React.forwardRef<HTMLDivElement, PreviewProps>(({ data, templateId, labels }, ref) => {
+export const Preview = React.forwardRef<HTMLDivElement, PreviewProps>(({ data, templateId, labels, updateCustomization }, ref) => {
   const renderTemplate = () => {
+    const props = { data, labels, updateCustomization };
     switch (templateId) {
       case 'creative':
-        return <CreativeTemplate data={data} labels={labels} />;
+        return <CreativeTemplate {...props} />;
       case 'modern':
-        return <ModernTemplate data={data} labels={labels} />;
+        return <ModernTemplate {...props} />;
       case 'classic':
       default:
-        return <ClassicTemplate data={data} labels={labels} />;
+        return <ClassicTemplate {...props} />;
     }
   };
 

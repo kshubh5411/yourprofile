@@ -56,6 +56,38 @@ export interface CustomizationOptions {
   backgroundColor: string;
   fontFamily: string;
   photoLayout?: 'grid' | 'slideshow';
+  classicVariant?: 'centered' | 'photo-left' | 'photo-top';
+  classicFrameStyle?:
+    | 'royal'
+    | 'minimal'
+    | 'floral'
+    | 'mandala'
+    | 'premium-gold'
+    | 'temple-classic'
+    | 'modern-luxe'
+    | 'royal-maroon'
+    | 'ivory-floral'
+    | 'navy-heritage'
+    | 'pastel-wedding'
+    | 'traditional-scroll'
+    | 'emerald-regal'
+    | 'mono-executive'
+    | 'saffron-sacred'
+    | 'ruby-classic'
+    | 'pearl-elegance'
+    | 'charcoal-modern'
+    | 'lotus-heritage';
+  classicHeaderText?: string;
+  classicHeaderIcon?: string;
+  classicHeaderPosition?: { x: number; y: number };
+  classicPhotoPosition?: { x: number; y: number };
+  classicPersonalPhotoShape?: 'square' | 'rectangle';
+  godLogo: string;
+  selectedGodLogos?: string[];
+  godLogoPosition?: { x: number; y: number };
+  godLogoPositions?: Record<string, { x: number; y: number }>;
+  godLogoSize: number;
+  godLogoOpacity?: number;
   sectionVisibility: {
     personal: boolean;
     family: boolean;
@@ -133,7 +165,20 @@ export const initialBiodata: Biodata = {
     primaryColor: "#92400e", // amber-800 default for classic
     backgroundColor: "#ffffff",
     fontFamily: "serif",
+    classicVariant: 'centered',
+    classicFrameStyle: 'royal',
+    classicHeaderText: 'ॐ श्री गणेशाय नमः',
+    classicHeaderIcon: 'Ganesha',
+    classicHeaderPosition: undefined,
+    classicPhotoPosition: undefined,
+    classicPersonalPhotoShape: 'rectangle',
     photoLayout: 'grid',
+    godLogo: 'None',
+    selectedGodLogos: [],
+    godLogoPosition: undefined,
+    godLogoPositions: {},
+    godLogoSize: 24,
+    godLogoOpacity: 0.75,
     sectionVisibility: {
       personal: true,
       family: true,

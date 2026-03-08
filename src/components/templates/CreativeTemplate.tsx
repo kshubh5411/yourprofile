@@ -1,5 +1,5 @@
 import React from 'react';
-import { Biodata } from '../../types';
+import { Biodata, CustomizationOptions } from '../../types';
 import { TranslationLabels } from '../../constants/translations';
 import clsx from 'clsx';
 
@@ -7,12 +7,13 @@ interface TemplateProps {
   data: Biodata;
   labels: TranslationLabels;
   className?: string;
+  updateCustomization: (field: keyof CustomizationOptions, value: any) => void;
 }
 
-export const CreativeTemplate: React.FC<TemplateProps> = ({ data, labels, className }) => {
+export const CreativeTemplate: React.FC<TemplateProps> = ({ data, labels, className, updateCustomization }) => {
   const { personal, family, education, professional, partnerPreferences, customization } = data;
   const { primaryColor, fontFamily, sectionVisibility } = customization;
-  const fontClass = fontFamily === 'mono' ? 'font-mono' : fontFamily === 'sans' ? 'font-sans' : 'font-serif';
+  const fontClass = fontFamily === 'mono' ? 'font-doc-mono' : fontFamily === 'sans' ? 'font-doc-sans' : 'font-doc-serif';
 
   const hexToRgba = (hex: string, alpha: number) => {
     if (!hex || !hex.startsWith('#') || hex.length < 7) return hex;
@@ -36,7 +37,7 @@ export const CreativeTemplate: React.FC<TemplateProps> = ({ data, labels, classN
               <img 
                 src={data.profileImage} 
                 alt="Profile" 
-                className="w-32 h-32 rounded-full object-cover border-4 shadow-sm"
+                className="w-28 h-28 rounded-full object-cover border-4 shadow-sm"
                 style={{ borderColor: primaryColor }}
               />
             )}

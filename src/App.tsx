@@ -33,7 +33,9 @@ export default function App() {
   const componentRef = useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<'editor' | 'preview'>('editor');
+  const exportMenuRef = useRef<HTMLDivElement>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const stored = localStorage.getItem('theme');
     if (stored) return stored === 'dark';
@@ -43,6 +45,17 @@ export default function App() {
   React.useEffect(() => {
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
+
+  React.useEffect(() => {
+    const onDocClick = (event: MouseEvent) => {
+      if (!exportMenuRef.current) return;
+      if (!exportMenuRef.current.contains(event.target as Node)) {
+        setIsExportOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
 
   const handlePrint = async () => {
     if (!componentRef.current) return;
@@ -110,6 +123,29 @@ export default function App() {
             sanitizeElementColors(el as HTMLElement);
           });
 
+          // 5. Force stable font rendering for section pills in exported PDF
+          const pdfSafePills = clonedDoc.querySelectorAll('.pdf-safe-pill');
+          pdfSafePills.forEach((el) => {
+            const style = (el as HTMLElement).style;
+            style.fontFamily = 'Arial, Helvetica, sans-serif';
+            style.letterSpacing = '0';
+            style.fontKerning = 'none';
+            style.fontVariantLigatures = 'none';
+            style.fontFeatureSettings = '"kern" 0, "liga" 0, "clig" 0';
+            style.fontWeight = '800';
+            style.textTransform = 'none';
+            style.wordSpacing = '0';
+            style.whiteSpace = 'nowrap';
+          });
+
+          const pdfSafeWords = clonedDoc.querySelectorAll('.pdf-safe-pill-word');
+          pdfSafeWords.forEach((el) => {
+            const style = (el as HTMLElement).style;
+            style.display = 'inline-block';
+            style.letterSpacing = '0';
+            style.wordSpacing = '0';
+          });
+
         }
       });
       
@@ -151,7 +187,7 @@ export default function App() {
       try {
         await navigator.share({
           title: 'My Biodata',
-          text: 'Check out my biodata created with vivahprofile!',
+          text: 'Check out my biodata created with YourProfile!',
           url: url,
         });
       } catch (err) {
@@ -178,6 +214,16 @@ export default function App() {
     const selectedCountry = countries.find(c => c.code === data.country);
     return selectedCountry ? selectedCountry.languages : [];
   }, [data.country]);
+  const selectedCountryName = useMemo(
+    () => countries.find((c) => c.code === data.country)?.name || data.country,
+    [data.country]
+  );
+  const countryFlag = useMemo(() => {
+    if (data.country.length !== 2) return '🌐';
+    return data.country
+      .toUpperCase()
+      .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
+  }, [data.country]);
 
   // Set default language when country changes if current language is not available
   React.useEffect(() => {
@@ -191,12 +237,12 @@ export default function App() {
   }, [data.country, data.language, setLanguage]);
 
   return (
-    <div className={clsx("flex flex-col lg:flex-row min-h-screen lg:h-screen overflow-x-hidden lg:overflow-hidden font-sans", isDarkMode ? 'theme-dark bg-slate-950 text-slate-100' : 'bg-gray-100 text-gray-900')}>
+    <div className={clsx("flex flex-col lg:flex-row min-h-screen lg:h-screen overflow-x-hidden lg:overflow-hidden", isDarkMode ? 'theme-dark bg-slate-950 text-slate-100' : 'bg-gray-100 text-gray-900')}>
       <div className={clsx("lg:hidden sticky top-0 z-30 border-b px-3 py-2 flex gap-2 print:hidden", isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200')}>
         <button
           onClick={() => setMobilePanel('editor')}
           className={clsx(
-            'flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+            'flex-1 rounded-lg px-3 py-2.5 text-[15px] font-semibold transition-colors',
             mobilePanel === 'editor'
               ? 'bg-indigo-600 text-white'
               : isDarkMode
@@ -209,7 +255,7 @@ export default function App() {
         <button
           onClick={() => setMobilePanel('preview')}
           className={clsx(
-            'flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+            'flex-1 rounded-lg px-3 py-2.5 text-[15px] font-semibold transition-colors',
             mobilePanel === 'preview'
               ? 'bg-indigo-600 text-white'
               : isDarkMode
@@ -241,10 +287,20 @@ export default function App() {
           mobilePanel === 'editor' ? 'flex' : 'hidden lg:flex'
         )}
       >
-        <div className={clsx("p-4 border-b flex items-center justify-between text-white", isDarkMode ? 'bg-indigo-700 border-indigo-500' : 'bg-indigo-600 border-gray-200')}>
-          <div className="flex items-center gap-2">
+        <div
+          className={clsx(
+            "p-4 border-b flex items-center justify-between text-white",
+            isDarkMode
+              ? 'bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 border-indigo-500'
+              : 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500 border-indigo-300'
+          )}
+        >
+          <div className="flex items-center gap-2.5">
             <BrandLogo size={24} variant="light" />
-            <h1 className="text-xl font-bold tracking-tight">vivahprofile</h1>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight leading-none">YourProfile</h1>
+              <p className="text-[11px] text-white/85 mt-0.5 tracking-wide">Profiles Crafted Beautifully</p>
+            </div>
           </div>
         </div>
         
@@ -276,139 +332,174 @@ export default function App() {
       >
         
         {/* Toolbar */}
-        <div className={clsx("border-b flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 px-3 sm:px-4 lg:px-6 py-3 shadow-sm z-10 print:hidden", isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200')}>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className={clsx("flex items-center gap-1 rounded-lg p-1", isDarkMode ? 'bg-slate-800' : 'bg-gray-100')}>
-              <button
-                onClick={() => setTemplate('classic')}
-                className={clsx(
-                  "px-2.5 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all",
-                  data.templateId === 'classic'
-                    ? isDarkMode
-                      ? "bg-slate-700 text-indigo-300 shadow-sm"
-                      : "bg-white text-indigo-600 shadow-sm"
-                    : isDarkMode
-                      ? "text-slate-300 hover:text-white"
-                      : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                Classic
-              </button>
-              <button
-                onClick={() => setTemplate('modern')}
-                className={clsx(
-                  "px-2.5 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all",
-                  data.templateId === 'modern'
-                    ? isDarkMode
-                      ? "bg-slate-700 text-indigo-300 shadow-sm"
-                      : "bg-white text-indigo-600 shadow-sm"
-                    : isDarkMode
-                      ? "text-slate-300 hover:text-white"
-                      : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                Modern
-              </button>
-              <button
-                onClick={() => setTemplate('creative')}
-                className={clsx(
-                  "px-2.5 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all",
-                  data.templateId === 'creative'
-                    ? isDarkMode
-                      ? "bg-slate-700 text-indigo-300 shadow-sm"
-                      : "bg-white text-indigo-600 shadow-sm"
-                    : isDarkMode
-                      ? "text-slate-300 hover:text-white"
-                      : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                Creative
-              </button>
-            </div>
-
-            <div className={clsx("hidden sm:block h-6 w-px mx-1", isDarkMode ? 'bg-slate-700' : 'bg-gray-200')} />
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <MapPin size={16} className={isDarkMode ? 'text-slate-400' : 'text-gray-400'} />
-                <select
-                  value={data.country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  className={clsx("bg-transparent text-xs sm:text-sm font-medium focus:outline-none cursor-pointer max-w-[120px]", isDarkMode ? 'text-slate-200 hover:text-indigo-300' : 'text-gray-700 hover:text-indigo-600')}
-                >
-                  {countries.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
+        <div
+          className={clsx(
+            "border-b px-3 sm:px-4 lg:px-6 py-3 z-10 print:hidden",
+            isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'
+          )}
+        >
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className={clsx("rounded-xl border p-1 h-12 flex items-center", isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-gray-50 border-gray-200')}>
+                <div className="flex items-center gap-1 rounded-lg">
+                  <button
+                    onClick={() => setTemplate('classic')}
+                    className={clsx(
+                      "px-3 py-2 rounded-md text-sm font-semibold transition-all h-10",
+                      data.templateId === 'classic'
+                        ? isDarkMode
+                          ? "bg-slate-700 text-indigo-300"
+                          : "bg-white text-indigo-600 shadow-sm border border-indigo-100"
+                        : isDarkMode
+                          ? "text-slate-300 hover:text-white"
+                          : "text-gray-600 hover:text-gray-900"
+                    )}
+                  >
+                    Classic
+                  </button>
+                  <button
+                    onClick={() => setTemplate('modern')}
+                    className={clsx(
+                      "px-3 py-2 rounded-md text-sm font-semibold transition-all h-10",
+                      data.templateId === 'modern'
+                        ? isDarkMode
+                          ? "bg-slate-700 text-indigo-300"
+                          : "bg-white text-indigo-600 shadow-sm border border-indigo-100"
+                        : isDarkMode
+                          ? "text-slate-300 hover:text-white"
+                          : "text-gray-600 hover:text-gray-900"
+                    )}
+                  >
+                    Modern
+                  </button>
+                  <button
+                    onClick={() => setTemplate('creative')}
+                    className={clsx(
+                      "px-3 py-2 rounded-md text-sm font-semibold transition-all h-10",
+                      data.templateId === 'creative'
+                        ? isDarkMode
+                          ? "bg-slate-700 text-indigo-300"
+                          : "bg-white text-indigo-600 shadow-sm border border-indigo-100"
+                        : isDarkMode
+                          ? "text-slate-300 hover:text-white"
+                          : "text-gray-600 hover:text-gray-900"
+                    )}
+                  >
+                    Creative
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className={clsx("rounded-xl border px-3 h-12 flex items-center", isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200')}>
+                <div className="flex items-center gap-2">
+                  <span className="text-base leading-none" aria-hidden="true">{countryFlag}</span>
+                  <MapPin size={15} className={isDarkMode ? 'text-slate-400' : 'text-gray-400'} />
+                  <select
+                    value={data.country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className={clsx(
+                      "bg-transparent text-sm font-semibold focus:outline-none cursor-pointer min-w-[120px]",
+                      isDarkMode ? 'text-slate-200 hover:text-indigo-300' : 'text-gray-700 hover:text-indigo-600'
+                    )}
+                    title={`Country: ${selectedCountryName}`}
+                  >
+                    {countries.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className={clsx("flex items-center gap-2 px-3 h-12 rounded-xl border", isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-indigo-50 border-indigo-200')}>
                 {isGenerating ? (
                   <Loader2 size={16} className="text-indigo-600 animate-spin" />
                 ) : (
-                  <Globe size={16} className={isDarkMode ? 'text-slate-400' : 'text-gray-400'} />
+                  <Wand2 size={16} className={isDarkMode ? 'text-indigo-300' : 'text-indigo-700'} />
                 )}
-                <select
-                  value={data.language}
-                  onChange={(e) => setLanguage(e.target.value)}
+                <button
+                  onClick={handleAiEnhance}
                   disabled={isGenerating}
                   className={clsx(
-                    "bg-transparent text-xs sm:text-sm font-medium focus:outline-none cursor-pointer max-w-[120px]",
-                    isDarkMode ? "text-slate-200 hover:text-indigo-300" : "text-gray-700 hover:text-indigo-600",
-                    isGenerating && "opacity-50 cursor-not-allowed"
+                    "font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed",
+                    isDarkMode ? 'text-indigo-300' : 'text-indigo-700'
                   )}
                 >
-                  {availableLanguages.map((lang) => (
-                    <option key={lang.code} value={lang.name}>
-                      {lang.name}
-                    </option>
-                  ))}
-                </select>
+                  {isGenerating ? 'Playing...' : 'Play with AI'}
+                </button>
+                <div className={clsx("h-5 w-px", isDarkMode ? 'bg-slate-600' : 'bg-indigo-200')} />
+                <div className="flex items-center gap-1">
+                  <Globe size={14} className={isDarkMode ? 'text-slate-400' : 'text-indigo-500'} />
+                  <select
+                    value={data.language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    disabled={isGenerating}
+                    className={clsx(
+                      "bg-transparent text-sm font-semibold focus:outline-none cursor-pointer max-w-[120px]",
+                      isDarkMode ? "text-slate-200 hover:text-indigo-300" : "text-indigo-700 hover:text-indigo-800",
+                      isGenerating && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    {availableLanguages.map((lang) => (
+                      <option key={lang.code} value={lang.name}>
+                        {lang.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
+              <div className="relative" ref={exportMenuRef}>
+                <button
+                  onClick={() => setIsExportOpen((prev) => !prev)}
+                  className="flex items-center gap-2 px-4 h-12 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors font-semibold text-sm shadow-sm"
+                >
+                  <Download size={16} />
+                  Export
+                </button>
+                {isExportOpen && (
+                  <div className={clsx("absolute right-0 mt-2 w-44 rounded-lg border shadow-lg overflow-hidden z-30", isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200')}>
+                    <button
+                      onClick={() => {
+                        setIsExportOpen(false);
+                        handleShare();
+                      }}
+                      className={clsx("w-full px-3 py-2.5 text-left text-sm font-medium flex items-center gap-2", isDarkMode ? 'hover:bg-slate-800 text-slate-100' : 'hover:bg-gray-50 text-gray-700')}
+                    >
+                      <Share2 size={15} />
+                      Share
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsExportOpen(false);
+                        handlePrint();
+                      }}
+                      disabled={isPrinting}
+                      className={clsx("w-full px-3 py-2.5 text-left text-sm font-medium flex items-center gap-2 disabled:opacity-50", isDarkMode ? 'hover:bg-slate-800 text-slate-100' : 'hover:bg-gray-50 text-gray-700')}
+                    >
+                      {isPrinting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+                      {isPrinting ? 'Generating PDF...' : 'Download PDF'}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setIsDarkMode((prev) => !prev)}
+                className={clsx(
+                  'hidden lg:flex items-center gap-2 px-4 h-12 rounded-xl transition-colors font-semibold text-sm border',
+                  isDarkMode
+                    ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
+                    : 'bg-white text-slate-700 border-gray-200 hover:bg-gray-50'
+                )}
+                aria-label="Toggle dark mode"
+              >
+                {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+                {isDarkMode ? 'Light' : 'Dark'}
+              </button>
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <button
-              onClick={handleAiEnhance}
-              disabled={isGenerating}
-              className="flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-xs sm:text-sm border border-indigo-200"
-            >
-              {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
-              {isGenerating ? 'Enhancing...' : 'AI Enhance'}
-            </button>
-
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-xs sm:text-sm border border-gray-200 shadow-sm"
-            >
-              <Share2 size={16} />
-              Share
-            </button>
-
-            <button
-              onClick={handlePrint}
-              disabled={isPrinting}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-xs sm:text-sm shadow-lg shadow-gray-200 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isPrinting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-              {isPrinting ? 'Generating PDF...' : 'Download PDF'}
-            </button>
-            <button
-              onClick={() => setIsDarkMode((prev) => !prev)}
-              className={clsx(
-                'hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm border',
-                isDarkMode
-                  ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
-                  : 'bg-white text-slate-700 border-gray-200 hover:bg-gray-50'
-              )}
-              aria-label="Toggle dark mode"
-            >
-              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
-              {isDarkMode ? 'Light' : 'Dark'}
-            </button>
           </div>
         </div>
 
@@ -423,7 +514,13 @@ export default function App() {
         {/* Preview Area */}
         <div className={clsx("flex-1 min-h-[65vh] lg:min-h-0 overflow-hidden relative print:overflow-visible print:bg-white print:absolute print:inset-0 print:z-50", isDarkMode ? 'bg-slate-950' : 'bg-slate-100')}>
           <div className="absolute inset-0 overflow-auto py-3 sm:py-6 lg:py-8 print:static print:overflow-visible print:p-0">
-             <Preview ref={componentRef} data={data} templateId={data.templateId} labels={labels} />
+             <Preview 
+              ref={componentRef} 
+              data={data} 
+              templateId={data.templateId} 
+              labels={labels}
+              updateCustomization={updateCustomization} 
+            />
           </div>
         </div>
       </div>

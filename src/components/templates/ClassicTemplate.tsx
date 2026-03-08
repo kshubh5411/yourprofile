@@ -1,97 +1,343 @@
-import React from 'react';
-import { Biodata } from '../../types';
+import React, { useRef } from 'react';
+import { Biodata, CustomizationOptions } from '../../types';
 import { TranslationLabels } from '../../constants/translations';
 import clsx from 'clsx';
+import Draggable from 'react-draggable';
+import { getGodLogoAsset } from '../../constants/godLogos';
 
 interface TemplateProps {
   data: Biodata;
   labels: TranslationLabels;
   className?: string;
+  updateCustomization: (field: keyof CustomizationOptions, value: any) => void;
 }
 
-export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, className }) => {
+export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, className, updateCustomization }) => {
   const { personal, family, education, professional, partnerPreferences, customization } = data;
-  const { primaryColor, fontFamily, sectionVisibility } = customization;
-  const fontClass = fontFamily === 'mono' ? 'font-mono' : fontFamily === 'sans' ? 'font-sans' : 'font-serif';
+  const {
+    primaryColor,
+    fontFamily,
+    sectionVisibility,
+    classicVariant = 'centered',
+    classicFrameStyle = 'royal',
+    classicHeaderText = 'ॐ श्री गणेशाय नमः',
+    classicHeaderIcon = 'Ganesha',
+    classicHeaderPosition,
+    classicPersonalPhotoShape = 'rectangle',
+  } = customization;
+  const fontClass = fontFamily === 'mono' ? 'font-doc-mono' : fontFamily === 'sans' ? 'font-doc-sans' : 'font-doc-serif';
+  const headerNodeRef = useRef<HTMLDivElement>(null);
+
+  const topHeaderIcon = getGodLogoAsset(classicHeaderIcon || 'Ganesha');
+  const defaultHeaderPosition =
+    classicVariant === 'photo-left' ? { x: 250, y: 2 } : { x: 300, y: 2 };
+  const makeWatermark = (borderPx: number, color: string, pattern = 'rings') => (
+    <div
+      className="pointer-events-none absolute right-[-95px] top-20 h-[390px] w-[390px] rounded-full opacity-10"
+      style={{
+        border: `${borderPx}px solid ${color}`,
+        background:
+          pattern === 'petal'
+            ? 'radial-gradient(circle at center, rgba(0,0,0,0.15) 0 4px, transparent 4px 100%), repeating-conic-gradient(from 0deg, rgba(0,0,0,0.12) 0 12deg, transparent 12deg 24deg)'
+            : 'repeating-radial-gradient(circle at center, transparent 0 12px, rgba(0,0,0,0.13) 12px 17px)',
+      }}
+    />
+  );
+
+  const framePresets = {
+    royal: {
+      outerClass: 'border-[5px]',
+      innerClass: 'border-2',
+      backgroundClass: 'bg-[#f8f8f6]',
+      sectionPill: true,
+      watermark: makeWatermark(18, primaryColor, 'rings'),
+    },
+    minimal: {
+      outerClass: 'border',
+      innerClass: '',
+      backgroundClass: 'bg-white',
+      sectionPill: false,
+      watermark: null,
+    },
+    floral: {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fffdfa]',
+      sectionPill: true,
+      watermark: makeWatermark(12, '#b45309', 'petal'),
+    },
+    mandala: {
+      outerClass: 'border-[4px]',
+      innerClass: 'border-2',
+      backgroundClass: 'bg-[#fbfbfb]',
+      sectionPill: true,
+      watermark: makeWatermark(14, '#854d0e', 'rings'),
+    },
+    'premium-gold': {
+      outerClass: 'border-[5px]',
+      innerClass: 'border-2',
+      backgroundClass: 'bg-[#fdf9ef]',
+      sectionPill: true,
+      watermark: makeWatermark(16, '#a16207', 'rings'),
+    },
+    'temple-classic': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fcf8ef]',
+      sectionPill: true,
+      watermark: makeWatermark(14, '#92400e', 'petal'),
+    },
+    'modern-luxe': {
+      outerClass: 'border-[2px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-white',
+      sectionPill: false,
+      watermark: null,
+    },
+    'royal-maroon': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fff8f8]',
+      sectionPill: true,
+      watermark: makeWatermark(14, '#881337', 'rings'),
+    },
+    'ivory-floral': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fffdf6]',
+      sectionPill: true,
+      watermark: makeWatermark(12, '#d97706', 'petal'),
+    },
+    'navy-heritage': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#f7faff]',
+      sectionPill: true,
+      watermark: makeWatermark(14, '#1e3a8a', 'rings'),
+    },
+    'pastel-wedding': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fff7fb]',
+      sectionPill: true,
+      watermark: makeWatermark(12, '#ec4899', 'petal'),
+    },
+    'traditional-scroll': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fffaf0]',
+      sectionPill: true,
+      watermark: makeWatermark(14, '#9a3412', 'rings'),
+    },
+    'emerald-regal': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#f7fffb]',
+      sectionPill: true,
+      watermark: makeWatermark(14, '#065f46', 'rings'),
+    },
+    'mono-executive': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fcfcfc]',
+      sectionPill: false,
+      watermark: null,
+    },
+    'saffron-sacred': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fff9f2]',
+      sectionPill: true,
+      watermark: makeWatermark(14, '#c2410c', 'petal'),
+    },
+    'ruby-classic': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fff9f9]',
+      sectionPill: true,
+      watermark: makeWatermark(14, '#991b1b', 'rings'),
+    },
+    'pearl-elegance': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fffefc]',
+      sectionPill: false,
+      watermark: makeWatermark(12, '#78716c', 'rings'),
+    },
+    'charcoal-modern': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#f8fafc]',
+      sectionPill: false,
+      watermark: null,
+    },
+    'lotus-heritage': {
+      outerClass: 'border-[4px]',
+      innerClass: 'border',
+      backgroundClass: 'bg-[#fff8ff]',
+      sectionPill: true,
+      watermark: makeWatermark(14, '#a21caf', 'petal'),
+    },
+  };
+  const framePreset = framePresets[classicFrameStyle] ?? framePresets.royal;
+
+  const renderSectionTitle = (title: string) => {
+    if (!framePreset.sectionPill) {
+      return (
+        <h3 className="text-xl font-bold border-b border-gray-300 mb-3 uppercase" style={{ color: primaryColor }}>
+          {title}
+        </h3>
+      );
+    }
+
+    const safeWords = title
+      .toUpperCase()
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    return (
+      <div className="mb-4 flex justify-start">
+        <div
+          className="pdf-safe-pill inline-flex px-6 py-1.5 rounded-full text-xl font-extrabold text-white leading-none whitespace-nowrap"
+          style={{
+            backgroundColor: primaryColor,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+            letterSpacing: '0',
+            textTransform: 'none',
+          }}
+        >
+          {safeWords.map((word, index) => (
+            <span key={`${word}-${index}`} className="pdf-safe-pill-word">
+              {index > 0 ? '\u00A0' : ''}
+              {word}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className={clsx('w-full h-full bg-white p-8 text-gray-900 border-4 border-double', fontClass, className)} style={{ borderColor: primaryColor }}>
-      <div className="text-center mb-8 border-b-2 pb-4" style={{ borderColor: primaryColor }}>
-        {data.profileImage && (
-          <div className="mb-6 flex justify-center">
-            <img 
-              src={data.profileImage} 
-              alt="Profile" 
-              className="w-40 h-40 rounded-full object-cover border-4 shadow-sm"
-              style={{ borderColor: primaryColor }}
-            />
+    <div
+      className={clsx(
+        'relative w-full h-full p-8 text-gray-900 overflow-hidden',
+        fontClass,
+        className,
+        framePreset.backgroundClass,
+        framePreset.outerClass
+      )}
+      style={{ borderColor: primaryColor }}
+    >
+      {framePreset.innerClass && (
+        <div
+          className={clsx('pointer-events-none absolute inset-2', framePreset.innerClass)}
+          style={{ borderColor: primaryColor }}
+        />
+      )}
+      {framePreset.watermark}
+      <div className="relative mb-6 border-b-2 pb-3 min-h-[108px]" style={{ borderColor: primaryColor }}>
+        <Draggable
+          nodeRef={headerNodeRef}
+          bounds="parent"
+          position={classicHeaderPosition || defaultHeaderPosition}
+          onStop={(_, dragData) => {
+            updateCustomization('classicHeaderPosition', { x: dragData.x, y: dragData.y });
+          }}
+        >
+          <div ref={headerNodeRef} className="absolute cursor-move touch-none z-20 text-center min-w-[180px]">
+            {topHeaderIcon && <img src={topHeaderIcon} alt="Top icon" className="w-12 h-12 object-contain mb-1 mx-auto" />}
+            <h1 className="text-lg font-semibold tracking-wide" style={{ color: primaryColor }}>
+              {classicHeaderText || 'ॐ श्री गणेशाय नमः'}
+            </h1>
           </div>
-        )}
-        <h1 className="text-4xl font-bold uppercase tracking-widest mb-2" style={{ color: primaryColor }}>{labels.biodata}</h1>
-        <h2 className="text-2xl font-semibold text-gray-800">{personal.fullName || "Your Name"}</h2>
+        </Draggable>
+
       </div>
 
       <div className="space-y-6">
         {/* Personal Details */}
         {sectionVisibility.personal && (
           <section>
-            <h3 className="text-xl font-bold border-b border-gray-300 mb-3 uppercase" style={{ color: primaryColor }}>{labels.personalDetails}</h3>
-            <div className="grid grid-cols-3 gap-y-2 text-sm">
-              {personal.dob && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.dob}:</div>
-                  <div className="col-span-2">{personal.dob}</div>
-                </>
-              )}
-              
-              {personal.gender && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.gender}:</div>
-                  <div className="col-span-2">{personal.gender}</div>
-                </>
-              )}
+            {renderSectionTitle(labels.personalDetails)}
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
+              <div className="grid grid-cols-3 gap-y-2 text-sm">
+                {personal.fullName && (
+                  <>
+                    <div className="font-semibold text-gray-600">{labels.fullName}:</div>
+                    <div className="col-span-2">{personal.fullName}</div>
+                  </>
+                )}
+                {personal.dob && (
+                  <>
+                    <div className="font-semibold text-gray-600">{labels.dob}:</div>
+                    <div className="col-span-2">{personal.dob}</div>
+                  </>
+                )}
+                
+                {personal.gender && (
+                  <>
+                    <div className="font-semibold text-gray-600">{labels.gender}:</div>
+                    <div className="col-span-2">{personal.gender}</div>
+                  </>
+                )}
 
-              {personal.height && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.height}:</div>
-                  <div className="col-span-2">{personal.height}</div>
-                </>
-              )}
+                {personal.height && (
+                  <>
+                    <div className="font-semibold text-gray-600">{labels.height}:</div>
+                    <div className="col-span-2">{personal.height}</div>
+                  </>
+                )}
 
-              {personal.complexion && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.complexion}:</div>
-                  <div className="col-span-2">{personal.complexion}</div>
-                </>
-              )}
+                {personal.complexion && (
+                  <>
+                    <div className="font-semibold text-gray-600">{labels.complexion}:</div>
+                    <div className="col-span-2">{personal.complexion}</div>
+                  </>
+                )}
 
-              {personal.maritalStatus && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.maritalStatus}:</div>
-                  <div className="col-span-2">{personal.maritalStatus}</div>
-                </>
-              )}
+                {personal.maritalStatus && (
+                  <>
+                    <div className="font-semibold text-gray-600">{labels.maritalStatus}:</div>
+                    <div className="col-span-2">{personal.maritalStatus}</div>
+                  </>
+                )}
 
-              {personal.languages && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.languages}:</div>
-                  <div className="col-span-2">{personal.languages}</div>
-                </>
-              )}
-              
-              {personal.hobbies && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.hobbies}:</div>
-                  <div className="col-span-2">{personal.hobbies}</div>
-                </>
-              )}
+                {personal.languages && (
+                  <>
+                    <div className="font-semibold text-gray-600">{labels.languages}:</div>
+                    <div className="col-span-2">{personal.languages}</div>
+                  </>
+                )}
+                
+                {personal.hobbies && (
+                  <>
+                    <div className="font-semibold text-gray-600">{labels.hobbies}:</div>
+                    <div className="col-span-2">{personal.hobbies}</div>
+                  </>
+                )}
 
-              {personal.customFields && personal.customFields.map((field) => (
-                <React.Fragment key={field.id}>
-                  <div className="font-semibold text-gray-600">{field.label}:</div>
-                  <div className="col-span-2">{field.value}</div>
-                </React.Fragment>
-              ))}
+                {personal.customFields && personal.customFields.map((field) => (
+                  <React.Fragment key={field.id}>
+                    <div className="font-semibold text-gray-600">{field.label}:</div>
+                    <div className="col-span-2">{field.value}</div>
+                  </React.Fragment>
+                ))}
+              </div>
+              {data.profileImage && (
+                <div className="justify-self-end">
+                  <img
+                    src={data.profileImage}
+                    alt="Profile"
+                    className={clsx(
+                      "object-cover shadow-sm",
+                      classicPersonalPhotoShape === 'square'
+                        ? "w-36 h-40 rounded-md"
+                        : "w-36 h-48 rounded-sm"
+                    )}
+                  />
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -99,7 +345,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
         {/* Family Background */}
         {sectionVisibility.family && (
           <section>
-            <h3 className="text-xl font-bold border-b border-gray-300 mb-3 uppercase" style={{ color: primaryColor }}>{labels.familyBackground}</h3>
+            {renderSectionTitle(labels.familyBackground)}
             <div className="grid grid-cols-3 gap-y-2 text-sm">
               {family.fatherName && (
                 <>
@@ -163,7 +409,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
         {/* Education & Career */}
         {(sectionVisibility.education || sectionVisibility.professional) && (
           <section>
-            <h3 className="text-xl font-bold border-b border-gray-300 mb-3 uppercase" style={{ color: primaryColor }}>{labels.educationCareer}</h3>
+            {renderSectionTitle(labels.educationCareer)}
             <div className="grid grid-cols-3 gap-y-2 text-sm">
               {sectionVisibility.education && (
                 <>
@@ -227,9 +473,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
 
         {sectionVisibility.partnerPreferences && partnerPreferences.summary && (
           <section>
-            <h3 className="text-xl font-bold border-b border-gray-300 mb-3 uppercase" style={{ color: primaryColor }}>
-              {labels.partnerPreferences || 'Partner Preferences'}
-            </h3>
+            {renderSectionTitle(labels.partnerPreferences || 'Partner Preferences')}
             <p className="text-sm leading-relaxed text-gray-700">{partnerPreferences.summary}</p>
             {partnerPreferences.customFields && partnerPreferences.customFields.length > 0 && (
               <div className="grid grid-cols-3 gap-y-2 text-sm mt-3">
@@ -246,7 +490,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
 
         {/* Contact */}
         <section>
-          <h3 className="text-xl font-bold border-b border-gray-300 mb-3 uppercase" style={{ color: primaryColor }}>{labels.contact}</h3>
+          {renderSectionTitle(labels.contact)}
           <div className="grid grid-cols-3 gap-y-2 text-sm">
             {personal.address && (
               <>
