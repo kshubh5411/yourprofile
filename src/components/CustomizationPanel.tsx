@@ -7,6 +7,7 @@ import { topIconOptions } from '../constants/godLogos';
 interface CustomizationPanelProps {
   data: Biodata;
   labels: TranslationLabels;
+  isDarkMode?: boolean;
   onUpdateCustomization: (field: keyof Biodata['customization'], value: any) => void;
   onToggleVisibility: (section: keyof Biodata['customization']['sectionVisibility']) => void;
 }
@@ -14,6 +15,7 @@ interface CustomizationPanelProps {
 export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
   data,
   labels,
+  isDarkMode = false,
   onUpdateCustomization,
   onToggleVisibility,
 }) => {
@@ -214,7 +216,7 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
     <div className="customization-panel p-4 space-y-6">
       {/* Colors */}
       <div>
-        <div className="flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700">
+        <div className={isDarkMode ? "flex items-center gap-2 mb-3 text-[13px] font-bold text-slate-200" : "flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700"}>
           <Palette size={16} />
           <span>Theme Color</span>
         </div>
@@ -225,7 +227,7 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
               onClick={() => onUpdateCustomization('primaryColor', color.value)}
               className={`w-10 h-10 rounded-full border-2 transition-transform hover:scale-110 ${
                 data.customization.primaryColor === color.value
-                  ? 'border-gray-900 ring-2 ring-gray-200'
+                  ? isDarkMode ? 'border-slate-100 ring-2 ring-slate-500/40' : 'border-gray-900 ring-2 ring-gray-200'
                   : 'border-transparent'
               }`}
               style={{ backgroundColor: color.value }}
@@ -244,7 +246,7 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
 
       {/* Fonts */}
       <div>
-        <div className="flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700">
+        <div className={isDarkMode ? "flex items-center gap-2 mb-3 text-[13px] font-bold text-slate-200" : "flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700"}>
           <Type size={16} />
           <span>Typography</span>
         </div>
@@ -255,8 +257,8 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
               onClick={() => onUpdateCustomization('fontFamily', font.value)}
               className={`px-3 py-2.5 text-[14px] text-left rounded-lg border transition-colors ${
                 data.customization.fontFamily === font.value
-                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                  ? isDarkMode ? 'border-indigo-400 bg-indigo-500/15 text-indigo-200' : 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                  : isDarkMode ? 'border-slate-600 bg-slate-900 text-slate-200 hover:border-slate-500' : 'border-gray-200 hover:border-gray-300 text-gray-700'
               }`}
             >
               <span className={fontClassMap[font.value] || 'font-serif'}>{font.name}</span>
@@ -267,23 +269,23 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
 
       {data.templateId === 'classic' && (
         <div>
-          <div className="flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700">
+          <div className={isDarkMode ? "flex items-center gap-2 mb-3 text-[13px] font-bold text-slate-200" : "flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700"}>
             <Type size={16} />
             <span>Classic Header</span>
           </div>
-          <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3 mb-4">
+          <div className={isDarkMode ? "space-y-3 rounded-xl border border-slate-700 bg-slate-800 p-3 mb-4" : "space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3 mb-4"}>
             <div>
-              <label className="block text-[11px] font-semibold text-gray-600 mb-1">Top Text</label>
+              <label className={isDarkMode ? "block text-[11px] font-semibold text-slate-300 mb-1" : "block text-[11px] font-semibold text-gray-600 mb-1"}>Top Text</label>
               <input
                 type="text"
                 value={data.customization.classicHeaderText || ''}
                 onChange={(e) => onUpdateCustomization('classicHeaderText', e.target.value)}
                 placeholder="e.g. ॐ श्री गणेशाय नमः"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[14px] focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                className={isDarkMode ? "w-full rounded-lg border border-slate-600 bg-slate-900 text-slate-100 px-3 py-2 text-[14px] focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30" : "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[14px] focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"}
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-gray-600 mb-1">Top Icon</label>
+              <label className={isDarkMode ? "block text-[11px] font-semibold text-slate-300 mb-1" : "block text-[11px] font-semibold text-gray-600 mb-1"}>Top Icon</label>
               <div className="grid grid-cols-4 gap-2">
                 {visibleIcons.map((icon) => {
                   const selected = (data.customization.classicHeaderIcon || 'ganesha-4') === icon.id;
@@ -293,8 +295,8 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
                       onClick={() => onUpdateCustomization('classicHeaderIcon', icon.id)}
                       className={`rounded-lg border p-1.5 transition-colors ${
                         selected
-                          ? 'border-indigo-600 bg-indigo-50'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          ? isDarkMode ? 'border-indigo-400 bg-indigo-500/15' : 'border-indigo-600 bg-indigo-50'
+                          : isDarkMode ? 'border-slate-600 bg-slate-900 hover:border-slate-500' : 'border-gray-300 bg-white hover:border-gray-400'
                       }`}
                       title={icon.id}
                     >
@@ -306,27 +308,27 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
               {orderedIcons.length > featuredIcons.length && (
                 <button
                   onClick={() => setShowAllIcons((prev) => !prev)}
-                  className="mt-2 text-[13px] text-indigo-600 hover:text-indigo-800 font-semibold"
+                  className={isDarkMode ? "mt-2 text-[13px] text-indigo-300 hover:text-indigo-200 font-semibold" : "mt-2 text-[13px] text-indigo-600 hover:text-indigo-800 font-semibold"}
                 >
                   {showAllIcons ? 'Show less' : 'See more'}
                 </button>
               )}
               <button
                 onClick={() => onUpdateCustomization('classicHeaderIcon', 'none')}
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-100"
+                className={isDarkMode ? "mt-2 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-[12px] font-semibold text-slate-200 hover:bg-slate-800" : "mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-100"}
               >
                 Remove Icon
               </button>
             </div>
             <button
               onClick={() => onUpdateCustomization('classicHeaderPosition', undefined)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-100"
+              className={isDarkMode ? "w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-[12px] font-semibold text-slate-200 hover:bg-slate-800" : "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-100"}
             >
               Reset Header Position
             </button>
           </div>
 
-          <div className="flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700">
+          <div className={isDarkMode ? "flex items-center gap-2 mb-3 text-[13px] font-bold text-slate-200" : "flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700"}>
             <Type size={16} />
             <span>Frame Style</span>
           </div>
@@ -337,8 +339,8 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
                 onClick={() => onUpdateCustomization('classicFrameStyle', frame.value)}
                 className={`text-left rounded-xl border p-2 transition-all ${
                   (data.customization.classicFrameStyle || 'royal') === frame.value
-                    ? 'border-indigo-600 bg-indigo-50 shadow-sm'
-                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                    ? isDarkMode ? 'border-indigo-400 bg-indigo-500/15 shadow-sm' : 'border-indigo-600 bg-indigo-50 shadow-sm'
+                    : isDarkMode ? 'border-slate-700 bg-slate-900 hover:border-slate-600 hover:shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
                 <div
@@ -357,9 +359,9 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
                   </div>
                 </div>
                 <div className="mt-1.5 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-700">{frame.name}</span>
+                  <span className={isDarkMode ? "text-xs font-semibold text-slate-200" : "text-xs font-semibold text-gray-700"}>{frame.name}</span>
                   {(data.customization.classicFrameStyle || 'royal') === frame.value && (
-                    <span className="text-[10px] font-semibold text-indigo-700">Active</span>
+                    <span className={isDarkMode ? "text-[10px] font-semibold text-indigo-300" : "text-[10px] font-semibold text-indigo-700"}>Active</span>
                   )}
                 </div>
               </button>
@@ -368,7 +370,7 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
           {classicFrames.length > 4 && (
             <button
               onClick={() => setShowAllFrames((prev) => !prev)}
-              className="mt-2 text-[13px] text-indigo-600 hover:text-indigo-800 font-semibold"
+              className={isDarkMode ? "mt-2 text-[13px] text-indigo-300 hover:text-indigo-200 font-semibold" : "mt-2 text-[13px] text-indigo-600 hover:text-indigo-800 font-semibold"}
             >
               {showAllFrames ? 'Show less' : 'See more'}
             </button>
@@ -378,19 +380,19 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
 
       {/* Section Visibility */}
       <div>
-        <div className="flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700">
+        <div className={isDarkMode ? "flex items-center gap-2 mb-3 text-[13px] font-bold text-slate-200" : "flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700"}>
           <Eye size={16} />
           <span>Visible Sections</span>
         </div>
         <div className="space-y-2">
           {Object.entries(data.customization.sectionVisibility).map(([key, isVisible]) => (
-            <label key={key} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <span className="text-[15px] text-gray-700">{sectionLabelMap[key] || key}</span>
+            <label key={key} className={isDarkMode ? "flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 cursor-pointer" : "flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 cursor-pointer"}>
+              <span className={isDarkMode ? "text-[15px] text-slate-200" : "text-[15px] text-gray-700"}>{sectionLabelMap[key] || key}</span>
               <input
                 type="checkbox"
                 checked={isVisible}
                 onChange={() => onToggleVisibility(key as any)}
-                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                className={isDarkMode ? "w-4 h-4 text-indigo-500 rounded focus:ring-indigo-400 border-slate-500 bg-slate-900" : "w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"}
               />
             </label>
           ))}

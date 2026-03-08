@@ -552,6 +552,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <CustomizationPanel
             data={data}
             labels={labels}
+            isDarkMode={isDarkMode}
             onUpdateCustomization={onUpdateCustomization}
             onToggleVisibility={onToggleVisibility}
           />

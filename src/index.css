@@ -344,6 +344,24 @@
 }
 
 @layer components {
+  @keyframes sidebarHandleNudge {
+    0%, 100% {
+      transform: translateY(-50%) translateX(0);
+    }
+    50% {
+      transform: translateY(-50%) translateX(-3px);
+    }
+  }
+
+  .sidebar-edge-handle {
+    cursor: col-resize;
+    animation: sidebarHandleNudge 1.7s ease-in-out infinite;
+  }
+
+  .group\/sidebar:hover .sidebar-edge-handle {
+    animation-play-state: paused;
+  }
+
   .theme-dark .sidebar-panel {
     color: #e2e8f0;
   }

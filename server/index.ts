@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readFile } from 'fs/promises';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import { config as loadDotenv } from 'dotenv';
@@ -25,6 +25,20 @@ type JsonArray = JsonValue[];
 
 type RateEntry = { count: number; resetAt: number };
 const rateLimitStore = new Map<string, RateEntry>();
+const SHARE_DATA_DIR = path.resolve(rootDir, process.env.DATA_DIR || 'data');
+const SHARE_DATA_FILE = path.join(SHARE_DATA_DIR, 'shared-biodata.json');
+type ShareRecord = {
+  id: string;
+  data: Record<string, unknown>;
+  meta?: {
+    ownerId?: string;
+    landingRef?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+type ShareStore = Record<string, ShareRecord>;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -79,7 +93,7 @@ function setCorsHeaders(req: express.Request, res: express.Response) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
   }
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Max-Age', '86400');
 }
@@ -141,6 +155,35 @@ function sanitizeBiodataPayload(data: unknown) {
   delete cloned.profileImage;
   delete cloned.profileImageCrop;
   return clampDeep(cloned);
+}
+
+async function loadShareStore(): Promise<ShareStore> {
+  try {
+    const raw = await readFile(SHARE_DATA_FILE, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (!isPlainObject(parsed)) return {};
+    return parsed as ShareStore;
+  } catch {
+    return {};
+  }
+}
+
+async function saveShareStore(store: ShareStore): Promise<void> {
+  await mkdir(SHARE_DATA_DIR, { recursive: true });
+  await writeFile(SHARE_DATA_FILE, JSON.stringify(store, null, 2), 'utf-8');
+}
+
+function getPublicBaseUrl(req: express.Request): string {
+  const configured = process.env.APP_URL?.trim();
+  if (configured) return configured.replace(/\/+$/, '');
+  return `${req.protocol}://${req.get('host')}`;
+}
+
+function sanitizeIdentifier(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  if (!normalized) return undefined;
+  return normalized.slice(0, 120);
 }
 
 function escapeRegExp(value: string): string {
@@ -216,6 +259,7 @@ ${text}
 
 async function createApp() {
   const app = express();
+  app.set('trust proxy', 1);
   app.use(express.json({ limit: MAX_JSON_BODY }));
   app.use((req, res, next) => {
     if (!isProd) {
@@ -248,6 +292,55 @@ async function createApp() {
 
   app.get('/api/health', (_req, res) => {
     return res.status(200).json({ ok: true });
+  });
+
+  app.post('/api/biodata', async (req, res) => {
+    try {
+      const { data, meta } = req.body as { data?: unknown; meta?: unknown };
+      if (!validateDataPayload(data)) {
+        return res.status(400).send('Invalid data payload');
+      }
+      const metaObj = isPlainObject(meta) ? meta : {};
+      const ownerId = sanitizeIdentifier(metaObj.ownerId);
+      const landingRef = sanitizeIdentifier(metaObj.landingRef);
+
+      const now = new Date().toISOString();
+      const id = (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`)
+        .replace(/[^a-zA-Z0-9-]/g, '')
+        .slice(0, 32);
+      const store = await loadShareStore();
+      store[id] = {
+        id,
+        data: data as Record<string, unknown>,
+        meta: ownerId || landingRef ? { ownerId, landingRef } : undefined,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await saveShareStore(store);
+      const shareUrl = `${getPublicBaseUrl(req)}/shared/${id}`;
+      return res.status(201).json({ id, shareUrl });
+    } catch (error) {
+      console.error('Save biodata error:', error);
+      return res.status(500).send('Failed to save biodata');
+    }
+  });
+
+  app.get('/api/biodata/:id', async (req, res) => {
+    try {
+      const id = req.params.id;
+      if (!id || !/^[a-zA-Z0-9-]{8,64}$/.test(id)) {
+        return res.status(400).send('Invalid biodata id');
+      }
+      const store = await loadShareStore();
+      const record = store[id];
+      if (!record) {
+        return res.status(404).send('Biodata not found');
+      }
+      return res.status(200).json(record);
+    } catch (error) {
+      console.error('Load biodata error:', error);
+      return res.status(500).send('Failed to load biodata');
+    }
   });
 
   app.post('/api/translate-enhance', async (req, res) => {

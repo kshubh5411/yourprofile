@@ -36,10 +36,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ size = 28, className, vari
 
       <rect x="16" y="14" width="32" height="36" rx="8" fill={palette.card} stroke={palette.stroke} strokeWidth="2.5" />
 
-      <circle cx="26" cy="24" r="4.2" fill={palette.fill} />
-      <circle cx="38" cy="24" r="4.2" fill={palette.fill} />
-      <path d="M20 36C20 31.9 23.2 29 27 29C30.8 29 34 31.9 34 36V38H20V36Z" fill={palette.fill} />
-      <path d="M30 36C30 31.9 33.2 29 37 29C40.8 29 44 31.9 44 36V38H30V36Z" fill={palette.fill} />
+      <circle cx="32" cy="24" r="5.2" fill={palette.fill} />
+      <path d="M22 37C22 31.8 26.3 28 32 28C37.7 28 42 31.8 42 37V39H22V37Z" fill={palette.fill} />
 
       <path d="M22 16L32 8L42 16" stroke={palette.accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
