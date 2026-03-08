@@ -51,6 +51,13 @@ export interface PartnerPreferencesInfo {
   customFields: CustomField[];
 }
 
+export type SectionOrderKey =
+  | 'personal'
+  | 'family'
+  | 'educationCareer'
+  | 'partnerPreferences'
+  | 'contact';
+
 export interface CustomizationOptions {
   primaryColor: string;
   backgroundColor: string;
@@ -81,13 +88,14 @@ export interface CustomizationOptions {
   classicHeaderIcon?: string;
   classicHeaderPosition?: { x: number; y: number };
   classicPhotoPosition?: { x: number; y: number };
-  classicPersonalPhotoShape?: 'square' | 'rectangle';
+  classicPersonalPhotoShape?: 'circle' | 'square' | 'rectangle';
   godLogo: string;
   selectedGodLogos?: string[];
   godLogoPosition?: { x: number; y: number };
   godLogoPositions?: Record<string, { x: number; y: number }>;
   godLogoSize: number;
   godLogoOpacity?: number;
+  sectionOrder?: SectionOrderKey[];
   sectionVisibility: {
     personal: boolean;
     family: boolean;
@@ -179,6 +187,7 @@ export const initialBiodata: Biodata = {
     godLogoPositions: {},
     godLogoSize: 24,
     godLogoOpacity: 0.75,
+    sectionOrder: ['personal', 'family', 'educationCareer', 'partnerPreferences', 'contact'],
     sectionVisibility: {
       personal: true,
       family: true,

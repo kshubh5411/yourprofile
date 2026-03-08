@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
-import { Biodata, CustomizationOptions } from '../../types';
+import React, { useRef, useState, useEffect } from 'react';
+import { Biodata, CustomizationOptions, SectionOrderKey } from '../../types';
 import { TranslationLabels } from '../../constants/translations';
 import clsx from 'clsx';
 import Draggable from 'react-draggable';
 import { getGodLogoAsset } from '../../constants/godLogos';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface TemplateProps {
   data: Biodata;
@@ -27,10 +28,25 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
   } = customization;
   const fontClass = fontFamily === 'mono' ? 'font-doc-mono' : fontFamily === 'sans' ? 'font-doc-sans' : 'font-doc-serif';
   const headerNodeRef = useRef<HTMLDivElement>(null);
+  const headerShellRef = useRef<HTMLDivElement>(null);
 
   const topHeaderIcon = getGodLogoAsset(classicHeaderIcon || 'ganesha-4');
   const defaultHeaderPosition =
-    classicVariant === 'photo-left' ? { x: 250, y: 2 } : { x: 300, y: 2 };
+    classicVariant === 'photo-left' ? { x: 250, y: 0 } : { x: 300, y: 0 };
+  const normalizedHeaderPosition = {
+    x: Math.max(0, (classicHeaderPosition || defaultHeaderPosition).x),
+    y: Math.min(40, Math.max(0, (classicHeaderPosition || defaultHeaderPosition).y)),
+  };
+
+  useEffect(() => {
+    const shell = headerShellRef.current;
+    const header = headerNodeRef.current;
+    if (!shell || !header) return;
+    const maxX = Math.max(0, shell.clientWidth - header.offsetWidth);
+    if (normalizedHeaderPosition.x > maxX) {
+      updateCustomization('classicHeaderPosition', { x: maxX, y: normalizedHeaderPosition.y });
+    }
+  }, [normalizedHeaderPosition.x, normalizedHeaderPosition.y, updateCustomization]);
   const makeWatermark = (borderPx: number, color: string, pattern = 'rings') => (
     <div
       className="pointer-events-none absolute right-[-95px] top-20 h-[390px] w-[390px] rounded-full opacity-10"
@@ -180,47 +196,65 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
     },
   };
   const framePreset = framePresets[classicFrameStyle] ?? framePresets.royal;
+  const defaultSectionOrder: SectionOrderKey[] = ['personal', 'family', 'educationCareer', 'partnerPreferences', 'contact'];
+  const rawSectionOrder = customization.sectionOrder?.length ? customization.sectionOrder : defaultSectionOrder;
+  const orderedSectionKeys = [
+    ...rawSectionOrder.filter((key): key is SectionOrderKey => defaultSectionOrder.includes(key)),
+    ...defaultSectionOrder.filter((key) => !rawSectionOrder.includes(key)),
+  ];
+  const [draggingSection, setDraggingSection] = useState<SectionOrderKey | null>(null);
+
+  const moveSection = (source: SectionOrderKey, target: SectionOrderKey) => {
+    if (source === target) return;
+    const next = [...orderedSectionKeys];
+    const fromIndex = next.indexOf(source);
+    const toIndex = next.indexOf(target);
+    if (fromIndex < 0 || toIndex < 0) return;
+    next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, source);
+    updateCustomization('sectionOrder', next);
+  };
 
   const renderSectionTitle = (title: string) => {
     if (!framePreset.sectionPill) {
       return (
-        <h3 className="text-xl font-bold border-b border-gray-300 mb-3 uppercase" style={{ color: primaryColor }}>
-          {title}
-        </h3>
+        <div className="mb-2 flex items-center gap-3">
+          <h3 className="text-xl font-bold uppercase leading-none" style={{ color: primaryColor }}>
+            {title}
+          </h3>
+          <div className="h-px flex-1 bg-gray-300" />
+        </div>
       );
     }
 
-    const safeWords = title
-      .toUpperCase()
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
+    const pillText = title.toUpperCase().trim();
 
     return (
-      <div className="mb-4 flex justify-start">
+      <div className="mb-3 flex justify-start">
         <div
-          className="pdf-safe-pill inline-flex items-center gap-2 px-6 py-1.5 rounded-full text-xl font-extrabold text-white leading-none whitespace-nowrap"
+          className="pdf-safe-pill inline-flex h-11 items-center justify-center gap-2 px-5 rounded-full text-base font-extrabold text-white whitespace-nowrap"
           style={{
             backgroundColor: primaryColor,
             fontFamily: 'Arial, Helvetica, sans-serif',
             letterSpacing: '0',
             textTransform: 'none',
           }}
+          data-pill-text={pillText}
         >
-          {safeWords.map((word, index) => (
-            <span key={`${word}-${index}`} className="pdf-safe-pill-word" style={{ lineHeight: 1 }}>
-              {word}
-            </span>
-          ))}
+          <span className="relative top-[1px] block leading-none text-center">{pillText}</span>
         </div>
       </div>
     );
   };
+  const detailsGridClass = 'grid grid-cols-[minmax(150px,0.95fr)_minmax(0,1.5fr)] gap-x-6 gap-y-1.5 text-sm items-start';
+  const detailLabelClass = 'font-semibold text-gray-600 text-left leading-tight';
+  const detailValueClass = 'text-left leading-tight break-words';
 
   return (
     <div
+      data-export-template="classic"
       className={clsx(
-        'relative w-full h-full p-8 text-gray-900 overflow-hidden',
+        'relative w-full h-full p-6 text-gray-900 overflow-hidden print:h-auto print:overflow-visible',
         fontClass,
         className,
         framePreset.backgroundClass,
@@ -235,13 +269,16 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
         />
       )}
       {framePreset.watermark}
-      <div className="classic-header-shell relative z-10 mb-6 border-b-2 pb-3 min-h-[108px]" style={{ borderColor: primaryColor }}>
+      <div ref={headerShellRef} className="classic-header-shell relative z-10 mb-4 pt-1 min-h-[96px]">
         <Draggable
           nodeRef={headerNodeRef}
           bounds="parent"
-          position={classicHeaderPosition || defaultHeaderPosition}
+          position={normalizedHeaderPosition}
           onStop={(_, dragData) => {
-            updateCustomization('classicHeaderPosition', { x: dragData.x, y: dragData.y });
+            updateCustomization('classicHeaderPosition', {
+              x: Math.max(0, dragData.x),
+              y: Math.min(40, Math.max(0, dragData.y)),
+            });
           }}
         >
           <div ref={headerNodeRef} className="classic-header-draggable absolute cursor-move touch-none z-20 text-center min-w-[180px]">
@@ -262,269 +299,312 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
             )}
           </div>
         </Draggable>
-
+        <div className="absolute left-0 right-0 bottom-0 border-b-2" style={{ borderColor: primaryColor }} />
       </div>
 
-      <div className="relative z-10 space-y-6">
-        {/* Personal Details */}
-        {sectionVisibility.personal && (
-          <section>
-            {renderSectionTitle(labels.personalDetails)}
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
-              <div className="grid grid-cols-3 gap-y-2 text-sm">
-                {personal.fullName && (
-                  <>
-                    <div className="font-semibold text-gray-600">{labels.fullName}:</div>
-                    <div className="col-span-2">{personal.fullName}</div>
-                  </>
-                )}
-                {personal.dob && (
-                  <>
-                    <div className="font-semibold text-gray-600">{labels.dob}:</div>
-                    <div className="col-span-2">{personal.dob}</div>
-                  </>
-                )}
-                
-                {personal.gender && (
-                  <>
-                    <div className="font-semibold text-gray-600">{labels.gender}:</div>
-                    <div className="col-span-2">{personal.gender}</div>
-                  </>
-                )}
+      <div className="relative z-10 space-y-4">
+        {orderedSectionKeys.map((sectionKey) => {
+          const sectionDnDProps = {
+            draggable: true,
+            onDragStart: () => setDraggingSection(sectionKey),
+            onDragOver: (e: React.DragEvent<HTMLElement>) => e.preventDefault(),
+            onDrop: () => {
+              if (draggingSection) moveSection(draggingSection, sectionKey);
+              setDraggingSection(null);
+            },
+            onDragEnd: () => setDraggingSection(null),
+            className: clsx(
+              'group relative rounded-lg transition-colors',
+              draggingSection === sectionKey && 'bg-amber-50/60'
+            ),
+          };
 
-                {personal.height && (
-                  <>
-                    <div className="font-semibold text-gray-600">{labels.height}:</div>
-                    <div className="col-span-2">{personal.height}</div>
-                  </>
-                )}
+          const sectionIndex = orderedSectionKeys.indexOf(sectionKey);
+          const hoverControls = (
+            <div className="absolute -top-2 right-0 flex items-center gap-1 rounded-full border border-gray-200 bg-white/95 p-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (sectionIndex > 0) moveSection(sectionKey, orderedSectionKeys[sectionIndex - 1]);
+                }}
+                className="rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-40"
+                disabled={sectionIndex === 0}
+                title="Move up"
+              >
+                <ArrowUp size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (sectionIndex < orderedSectionKeys.length - 1) moveSection(sectionKey, orderedSectionKeys[sectionIndex + 1]);
+                }}
+                className="rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-40"
+                disabled={sectionIndex === orderedSectionKeys.length - 1}
+                title="Move down"
+              >
+                <ArrowDown size={12} />
+              </button>
+            </div>
+          );
 
-                {personal.complexion && (
-                  <>
-                    <div className="font-semibold text-gray-600">{labels.complexion}:</div>
-                    <div className="col-span-2">{personal.complexion}</div>
-                  </>
-                )}
-
-                {personal.maritalStatus && (
-                  <>
-                    <div className="font-semibold text-gray-600">{labels.maritalStatus}:</div>
-                    <div className="col-span-2">{personal.maritalStatus}</div>
-                  </>
-                )}
-
-                {personal.languages && (
-                  <>
-                    <div className="font-semibold text-gray-600">{labels.languages}:</div>
-                    <div className="col-span-2">{personal.languages}</div>
-                  </>
-                )}
-                
-                {personal.hobbies && (
-                  <>
-                    <div className="font-semibold text-gray-600">{labels.hobbies}:</div>
-                    <div className="col-span-2">{personal.hobbies}</div>
-                  </>
-                )}
-
-                {personal.customFields && personal.customFields.map((field) => (
-                  <React.Fragment key={field.id}>
-                    <div className="font-semibold text-gray-600">{field.label}:</div>
-                    <div className="col-span-2">{field.value}</div>
-                  </React.Fragment>
-                ))}
-              </div>
-              {data.profileImage && (
-                <div className="justify-self-end">
-                  <img
-                    src={data.profileImage}
-                    alt="Profile"
-                    className={clsx(
-                      "object-cover shadow-sm",
-                      classicPersonalPhotoShape === 'square'
-                        ? "w-36 h-40 rounded-md"
-                        : "w-36 h-48 rounded-sm"
+          if (sectionKey === 'personal' && sectionVisibility.personal) {
+            return (
+              <section key="personal" {...sectionDnDProps}>
+                {hoverControls}
+                {renderSectionTitle(labels.personalDetails)}
+                <div data-export-personal-layout="true" className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
+                  <div data-export-details-grid="true" className={detailsGridClass}>
+                    {personal.fullName && (
+                      <>
+                        <div className={detailLabelClass}>{labels.fullName}:</div>
+                        <div className={detailValueClass}>{personal.fullName}</div>
+                      </>
                     )}
-                  />
+                    {personal.dob && (
+                      <>
+                        <div className={detailLabelClass}>{labels.dob}:</div>
+                        <div className={detailValueClass}>{personal.dob}</div>
+                      </>
+                    )}
+                    {personal.gender && (
+                      <>
+                        <div className={detailLabelClass}>{labels.gender}:</div>
+                        <div className={detailValueClass}>{personal.gender}</div>
+                      </>
+                    )}
+                    {personal.height && (
+                      <>
+                        <div className={detailLabelClass}>{labels.height}:</div>
+                        <div className={detailValueClass}>{personal.height}</div>
+                      </>
+                    )}
+                    {personal.complexion && (
+                      <>
+                        <div className={detailLabelClass}>{labels.complexion}:</div>
+                        <div className={detailValueClass}>{personal.complexion}</div>
+                      </>
+                    )}
+                    {personal.maritalStatus && (
+                      <>
+                        <div className={detailLabelClass}>{labels.maritalStatus}:</div>
+                        <div className={detailValueClass}>{personal.maritalStatus}</div>
+                      </>
+                    )}
+                    {personal.languages && (
+                      <>
+                        <div className={detailLabelClass}>{labels.languages}:</div>
+                        <div className={detailValueClass}>{personal.languages}</div>
+                      </>
+                    )}
+                    {personal.hobbies && (
+                      <>
+                        <div className={detailLabelClass}>{labels.hobbies}:</div>
+                        <div className={detailValueClass}>{personal.hobbies}</div>
+                      </>
+                    )}
+                    {personal.customFields && personal.customFields.map((field) => (
+                      <React.Fragment key={field.id}>
+                        <div className={detailLabelClass}>{field.label}:</div>
+                        <div className={detailValueClass}>{field.value}</div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  {data.profileImage && (
+                    <div data-export-profile-image-wrap="true" className="justify-self-end self-start">
+                      <img
+                        src={data.profileImage}
+                        alt="Profile"
+                        className={clsx(
+                          "object-cover shadow-sm",
+                          classicPersonalPhotoShape === 'circle'
+                            ? "w-32 h-32 rounded-full"
+                            : classicPersonalPhotoShape === 'square'
+                              ? "w-32 h-32 rounded-md"
+                              : "w-32 h-40 rounded-sm"
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </section>
-        )}
+              </section>
+            );
+          }
 
-        {/* Family Background */}
-        {sectionVisibility.family && (
-          <section>
-            {renderSectionTitle(labels.familyBackground)}
-            <div className="grid grid-cols-3 gap-y-2 text-sm">
-              {family.fatherName && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.fatherName}:</div>
-                  <div className="col-span-2">{family.fatherName}</div>
-                </>
-              )}
-              
-              {family.fatherOccupation && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.fatherOccupation}:</div>
-                  <div className="col-span-2">{family.fatherOccupation}</div>
-                </>
-              )}
-
-              {family.motherName && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.motherName}:</div>
-                  <div className="col-span-2">{family.motherName}</div>
-                </>
-              )}
-
-              {family.motherOccupation && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.motherOccupation}:</div>
-                  <div className="col-span-2">{family.motherOccupation}</div>
-                </>
-              )}
-
-              {family.siblings && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.siblings}:</div>
-                  <div className="col-span-2">{family.siblings}</div>
-                </>
-              )}
-
-              {family.familyType && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.familyType}:</div>
-                  <div className="col-span-2">{family.familyType}</div>
-                </>
-              )}
-
-              {family.nativePlace && (
-                <>
-                  <div className="font-semibold text-gray-600">{labels.nativePlace}:</div>
-                  <div className="col-span-2">{family.nativePlace}</div>
-                </>
-              )}
-
-              {family.customFields && family.customFields.map((field) => (
-                <React.Fragment key={field.id}>
-                  <div className="font-semibold text-gray-600">{field.label}:</div>
-                  <div className="col-span-2">{field.value}</div>
-                </React.Fragment>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Education & Career */}
-        {(sectionVisibility.education || sectionVisibility.professional) && (
-          <section>
-            {renderSectionTitle(labels.educationCareer)}
-            <div className="grid grid-cols-3 gap-y-2 text-sm">
-              {sectionVisibility.education && (
-                <>
-                  {education.highestQualification && (
+          if (sectionKey === 'family' && sectionVisibility.family) {
+            return (
+              <section key="family" {...sectionDnDProps}>
+                {hoverControls}
+                {renderSectionTitle(labels.familyBackground)}
+                <div data-export-details-grid="true" className={detailsGridClass}>
+                  {family.fatherName && (
                     <>
-                      <div className="font-semibold text-gray-600">{labels.qualification}:</div>
-                      <div className="col-span-2">{education.highestQualification}</div>
+                      <div className={detailLabelClass}>{labels.fatherName}:</div>
+                      <div className={detailValueClass}>{family.fatherName}</div>
                     </>
                   )}
-                  
-                  {education.college && (
+                  {family.fatherOccupation && (
                     <>
-                      <div className="font-semibold text-gray-600">{labels.college}:</div>
-                      <div className="col-span-2">{education.college}</div>
+                      <div className={detailLabelClass}>{labels.fatherOccupation}:</div>
+                      <div className={detailValueClass}>{family.fatherOccupation}</div>
                     </>
                   )}
-
-                  {education.customFields && education.customFields.map((field) => (
+                  {family.motherName && (
+                    <>
+                      <div className={detailLabelClass}>{labels.motherName}:</div>
+                      <div className={detailValueClass}>{family.motherName}</div>
+                    </>
+                  )}
+                  {family.motherOccupation && (
+                    <>
+                      <div className={detailLabelClass}>{labels.motherOccupation}:</div>
+                      <div className={detailValueClass}>{family.motherOccupation}</div>
+                    </>
+                  )}
+                  {family.siblings && (
+                    <>
+                      <div className={detailLabelClass}>{labels.siblings}:</div>
+                      <div className={detailValueClass}>{family.siblings}</div>
+                    </>
+                  )}
+                  {family.familyType && (
+                    <>
+                      <div className={detailLabelClass}>{labels.familyType}:</div>
+                      <div className={detailValueClass}>{family.familyType}</div>
+                    </>
+                  )}
+                  {family.nativePlace && (
+                    <>
+                      <div className={detailLabelClass}>{labels.nativePlace}:</div>
+                      <div className={detailValueClass}>{family.nativePlace}</div>
+                    </>
+                  )}
+                  {family.customFields && family.customFields.map((field) => (
                     <React.Fragment key={field.id}>
-                      <div className="font-semibold text-gray-600">{field.label}:</div>
-                      <div className="col-span-2">{field.value}</div>
+                      <div className={detailLabelClass}>{field.label}:</div>
+                      <div className={detailValueClass}>{field.value}</div>
                     </React.Fragment>
                   ))}
-                </>
-              )}
+                </div>
+              </section>
+            );
+          }
 
-              {sectionVisibility.professional && (
-                <>
-                  {professional.occupation && (
+          if (sectionKey === 'educationCareer' && (sectionVisibility.education || sectionVisibility.professional)) {
+            return (
+              <section key="educationCareer" {...sectionDnDProps}>
+                {hoverControls}
+                {renderSectionTitle(labels.educationCareer)}
+                <div data-export-details-grid="true" className={detailsGridClass}>
+                  {sectionVisibility.education && (
                     <>
-                      <div className="font-semibold text-gray-600">{labels.occupation}:</div>
-                      <div className="col-span-2">{professional.occupation}</div>
+                      {education.highestQualification && (
+                        <>
+                          <div className={detailLabelClass}>{labels.qualification}:</div>
+                          <div className={detailValueClass}>{education.highestQualification}</div>
+                        </>
+                      )}
+                      {education.college && (
+                        <>
+                          <div className={detailLabelClass}>{labels.college}:</div>
+                          <div className={detailValueClass}>{education.college}</div>
+                        </>
+                      )}
+                      {education.customFields && education.customFields.map((field) => (
+                        <React.Fragment key={field.id}>
+                          <div className={detailLabelClass}>{field.label}:</div>
+                          <div className={detailValueClass}>{field.value}</div>
+                        </React.Fragment>
+                      ))}
                     </>
                   )}
-
-                  {professional.company && (
+                  {sectionVisibility.professional && (
                     <>
-                      <div className="font-semibold text-gray-600">{labels.company}:</div>
-                      <div className="col-span-2">{professional.company}</div>
+                      {professional.occupation && (
+                        <>
+                          <div className={detailLabelClass}>{labels.occupation}:</div>
+                          <div className={detailValueClass}>{professional.occupation}</div>
+                        </>
+                      )}
+                      {professional.company && (
+                        <>
+                          <div className={detailLabelClass}>{labels.company}:</div>
+                          <div className={detailValueClass}>{professional.company}</div>
+                        </>
+                      )}
+                      {professional.income && (
+                        <>
+                          <div className={detailLabelClass}>{labels.income}:</div>
+                          <div className={detailValueClass}>{professional.income}</div>
+                        </>
+                      )}
+                      {professional.customFields && professional.customFields.map((field) => (
+                        <React.Fragment key={field.id}>
+                          <div className={detailLabelClass}>{field.label}:</div>
+                          <div className={detailValueClass}>{field.value}</div>
+                        </React.Fragment>
+                      ))}
                     </>
                   )}
+                </div>
+              </section>
+            );
+          }
 
-                  {professional.income && (
+          if (sectionKey === 'partnerPreferences' && sectionVisibility.partnerPreferences && partnerPreferences.summary) {
+            return (
+              <section key="partnerPreferences" {...sectionDnDProps}>
+                {hoverControls}
+                {renderSectionTitle(labels.partnerPreferences || 'Partner Preferences')}
+                <p className="text-sm leading-relaxed text-gray-700">{partnerPreferences.summary}</p>
+                {partnerPreferences.customFields && partnerPreferences.customFields.length > 0 && (
+                  <div data-export-details-grid="true" className={`${detailsGridClass} mt-3`}>
+                    {partnerPreferences.customFields.map((field) => (
+                      <React.Fragment key={field.id}>
+                        <div className={detailLabelClass}>{field.label}:</div>
+                        <div className={detailValueClass}>{field.value}</div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          }
+
+          if (sectionKey === 'contact') {
+            return (
+              <section key="contact" {...sectionDnDProps}>
+                {hoverControls}
+                {renderSectionTitle(labels.contact)}
+                <div data-export-details-grid="true" className={detailsGridClass}>
+                  {personal.address && (
                     <>
-                      <div className="font-semibold text-gray-600">{labels.income}:</div>
-                      <div className="col-span-2">{professional.income}</div>
+                      <div className={detailLabelClass}>{labels.address}:</div>
+                      <div className={detailValueClass}>{personal.address}</div>
                     </>
                   )}
+                  {personal.contact && (
+                    <>
+                      <div className={detailLabelClass}>{labels.phone}:</div>
+                      <div className={detailValueClass}>{personal.contact}</div>
+                    </>
+                  )}
+                  {personal.email && (
+                    <>
+                      <div className={detailLabelClass}>{labels.email}:</div>
+                      <div className={detailValueClass}>{personal.email}</div>
+                    </>
+                  )}
+                </div>
+              </section>
+            );
+          }
 
-                  {professional.customFields && professional.customFields.map((field) => (
-                    <React.Fragment key={field.id}>
-                      <div className="font-semibold text-gray-600">{field.label}:</div>
-                      <div className="col-span-2">{field.value}</div>
-                    </React.Fragment>
-                  ))}
-                </>
-              )}
-            </div>
-          </section>
-        )}
-
-        {sectionVisibility.partnerPreferences && partnerPreferences.summary && (
-          <section>
-            {renderSectionTitle(labels.partnerPreferences || 'Partner Preferences')}
-            <p className="text-sm leading-relaxed text-gray-700">{partnerPreferences.summary}</p>
-            {partnerPreferences.customFields && partnerPreferences.customFields.length > 0 && (
-              <div className="grid grid-cols-3 gap-y-2 text-sm mt-3">
-                {partnerPreferences.customFields.map((field) => (
-                  <React.Fragment key={field.id}>
-                    <div className="font-semibold text-gray-600">{field.label}:</div>
-                    <div className="col-span-2">{field.value}</div>
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Contact */}
-        <section>
-          {renderSectionTitle(labels.contact)}
-          <div className="grid grid-cols-3 gap-y-2 text-sm">
-            {personal.address && (
-              <>
-                <div className="font-semibold text-gray-600">{labels.address}:</div>
-                <div className="col-span-2">{personal.address}</div>
-              </>
-            )}
-            
-            {personal.contact && (
-              <>
-                <div className="font-semibold text-gray-600">{labels.phone}:</div>
-                <div className="col-span-2">{personal.contact}</div>
-              </>
-            )}
-
-            {personal.email && (
-              <>
-                <div className="font-semibold text-gray-600">{labels.email}:</div>
-                <div className="col-span-2">{personal.email}</div>
-              </>
-            )}
-          </div>
-        </section>
-
+          return null;
+        })}
       </div>
     </div>
   );

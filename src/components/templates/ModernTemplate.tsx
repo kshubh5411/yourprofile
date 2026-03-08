@@ -16,7 +16,7 @@ export const ModernTemplate: React.FC<TemplateProps> = ({ data, labels, classNam
   const fontClass = fontFamily === 'mono' ? 'font-doc-mono' : fontFamily === 'sans' ? 'font-doc-sans' : 'font-doc-serif';
 
   return (
-    <div className={clsx('w-full h-full bg-white flex text-gray-800', fontClass, className)}>
+    <div className={clsx('w-full h-full bg-white flex text-gray-800 print:h-auto print:overflow-visible', fontClass, className)}>
       {/* Sidebar */}
       <div className="w-1/3 text-white p-6 flex flex-col" style={{ backgroundColor: primaryColor }}>
         {data.profileImage && (

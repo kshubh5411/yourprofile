@@ -1,7 +1,7 @@
 import React from 'react';
-import { Biodata, CustomField } from '../types';
+import { Biodata, CustomField, SectionOrderKey } from '../types';
 import { TranslationLabels } from '../constants/translations';
-import { ChevronDown, ChevronRight, User, Users, GraduationCap, Briefcase, Sparkles, Plus, Trash2, X, Camera, Crop as CropIcon, Wand2, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, User, Users, GraduationCap, Briefcase, Sparkles, Plus, Trash2, X, Camera, Crop as CropIcon, Wand2, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
 import clsx from 'clsx';
 import { CustomizationPanel } from './CustomizationPanel';
 import Cropper from 'react-easy-crop';
@@ -23,19 +23,19 @@ interface SidebarProps {
   isGeneratingPartnerPreferences: boolean;
 }
 
-const FormSection = ({ 
-  title, 
-  icon: Icon, 
-  children, 
-  isOpen, 
+const FormSection = ({
+  title,
+  icon: Icon,
+  children,
+  isOpen,
   onToggle,
   onAdd,
   isDarkMode = false
-}: { 
-  title: string; 
-  icon: any; 
-  children: React.ReactNode; 
-  isOpen: boolean; 
+}: {
+  title: string;
+  icon: any;
+  children: React.ReactNode;
+  isOpen: boolean;
   onToggle: () => void;
   onAdd?: () => void;
   isDarkMode?: boolean;
@@ -69,12 +69,12 @@ const FormSection = ({
         <ChevronRight size={16} className={isDarkMode ? "text-slate-400" : "text-gray-400"} />
       )}
     </button>
-    
+
     {isOpen && (
       <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2 duration-200">
         {children}
         {onAdd && (
-          <button 
+          <button
             onClick={onAdd}
             className="w-full py-2.5 flex items-center justify-center gap-2 text-[15px] font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-200 border-dashed mt-4"
           >
@@ -87,17 +87,17 @@ const FormSection = ({
   </div>
 );
 
-const InputField = ({ 
-  label, 
-  value, 
-  onChange, 
+const InputField = ({
+  label,
+  value,
+  onChange,
   type = "text",
   placeholder = "",
   onDelete
-}: { 
-  label: string; 
-  value: string; 
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void; 
+}: {
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   type?: string;
   placeholder?: string;
   onDelete?: () => void;
@@ -106,7 +106,7 @@ const InputField = ({
     <div className="flex justify-between items-center mb-1">
       <label className="block text-[11px] font-semibold text-gray-600">{label}</label>
       {onDelete && (
-        <button 
+        <button
           onClick={onDelete}
           className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
           title="Clear field"
@@ -147,7 +147,7 @@ const CustomFieldInput: React.FC<CustomFieldInputProps> = ({
   onRemove
 }) => (
   <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 relative group">
-    <button 
+    <button
       onClick={() => onRemove(field.id)}
       className="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
       title="Remove field"
@@ -173,11 +173,11 @@ const CustomFieldInput: React.FC<CustomFieldInputProps> = ({
   </div>
 );
 
-export const Sidebar: React.FC<SidebarProps> = ({ 
-  data, 
+export const Sidebar: React.FC<SidebarProps> = ({
+  data,
   labels,
   isDarkMode = false,
-  onUpdate, 
+  onUpdate,
   onAddCustomField,
   onRemoveCustomField,
   onUpdateCustomField,
@@ -190,13 +190,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [openSection, setOpenSection] = React.useState<string>('personal');
   const [activeTab, setActiveTab] = React.useState<'content' | 'design'>('content');
-  
+
   // Cropping State
   const [crop, setCrop] = React.useState({ x: 0, y: 0 });
   const [zoom, setZoom] = React.useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = React.useState<any>(null);
   const [isCropping, setIsCropping] = React.useState(false);
   const [tempProfileImage, setTempProfileImage] = React.useState<string | null>(null);
+  const [cropShapeMode, setCropShapeMode] = React.useState<'circle' | 'square' | 'rectangle'>(
+    (data.customization.classicPersonalPhotoShape as 'circle' | 'square' | 'rectangle') || 'rectangle'
+  );
+  const [isSectionOrderOpen, setIsSectionOrderOpen] = React.useState(false);
+  const defaultSectionOrder: SectionOrderKey[] = ['personal', 'family', 'educationCareer', 'partnerPreferences', 'contact'];
+  const currentSectionOrder = (data.customization.sectionOrder?.length
+    ? data.customization.sectionOrder
+    : defaultSectionOrder
+  ) as SectionOrderKey[];
+  const orderedSections: SectionOrderKey[] = [
+    ...currentSectionOrder.filter((section) => defaultSectionOrder.includes(section)),
+    ...defaultSectionOrder.filter((section) => !currentSectionOrder.includes(section)),
+  ];
+  const sectionOrderLabelMap: Record<SectionOrderKey, string> = {
+    personal: labels.personalDetails,
+    family: labels.familyBackground,
+    educationCareer: labels.educationCareer,
+    partnerPreferences: labels.partnerPreferences || 'Partner Preferences',
+    contact: labels.contact,
+  };
 
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? '' : section);
@@ -213,6 +233,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       reader.onloadend = () => {
         if (typeof reader.result === 'string') {
           setTempProfileImage(reader.result);
+          setCrop({ x: 0, y: 0 });
+          setZoom(1.2);
+          setCropShapeMode((data.customization.classicPersonalPhotoShape as 'circle' | 'square' | 'rectangle') || 'rectangle');
           setIsCropping(true);
         }
       };
@@ -226,6 +249,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         const croppedImage = await getCroppedImg(tempProfileImage, croppedAreaPixels);
         if (croppedImage) {
           onUpdateProfileImage(croppedImage, croppedAreaPixels);
+          onUpdateCustomization('classicPersonalPhotoShape', cropShapeMode);
           setIsCropping(false);
           setTempProfileImage(null);
         }
@@ -238,15 +262,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderCustomFields = (section: keyof Biodata) => {
     const sectionData = data[section] as any;
     if (!sectionData.customFields) return null;
-    
+
     return sectionData.customFields.map((field: CustomField) => (
-      <CustomFieldInput 
-        key={field.id} 
-        field={field} 
+      <CustomFieldInput
+        key={field.id}
+        field={field}
         onUpdate={(id, key, value) => onUpdateCustomField(section, id, key, value)}
         onRemove={(id) => onRemoveCustomField(section, id)}
       />
     ));
+  };
+
+  const moveSectionByIndex = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= orderedSections.length) return;
+    const next = [...orderedSections];
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    onUpdateCustomization('sectionOrder', next);
   };
 
   return (
@@ -257,7 +289,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <h2 className={clsx("text-2xl font-extrabold tracking-tight", isDarkMode ? 'text-slate-100' : 'text-gray-800')}>Biodata Editor</h2>
             <p className={clsx("text-[15px] mt-1", isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Customize your profile</p>
           </div>
-          <button 
+          <button
             onClick={onLoadSample}
             className="text-[13px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-md transition-colors"
             title="Load Sample Data"
@@ -304,10 +336,63 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'content' ? (
           <div className="divide-y divide-gray-100">
-            <FormSection 
-              title={labels.profilePicture || 'Profile Picture'} 
-              icon={Camera} 
-              isOpen={openSection === 'profile'} 
+            {data.templateId === 'classic' && (
+              <div className={clsx("p-4", isDarkMode ? "bg-slate-900 border-b border-slate-700" : "bg-white")}>
+                <button
+                  onClick={() => setIsSectionOrderOpen((prev) => !prev)}
+                  className={clsx(
+                    "w-full flex items-center justify-between rounded-lg border px-3 py-2 text-left",
+                    isDarkMode ? "border-slate-700 bg-slate-800" : "border-gray-200 bg-gray-50"
+                  )}
+                >
+                  <span className={clsx("text-[12px] font-bold uppercase tracking-wide", isDarkMode ? "text-slate-400" : "text-gray-500")}>
+                    Section Order
+                  </span>
+                  {isSectionOrderOpen ? (
+                    <ChevronDown size={16} className={isDarkMode ? "text-slate-400" : "text-gray-500"} />
+                  ) : (
+                    <ChevronRight size={16} className={isDarkMode ? "text-slate-400" : "text-gray-500"} />
+                  )}
+                </button>
+                {isSectionOrderOpen && (
+                  <div className="space-y-2 mt-3">
+                    {orderedSections.map((sectionKey, index) => (
+                      <div
+                        key={sectionKey}
+                        className={clsx(
+                          "w-full flex items-center justify-between rounded-lg border px-3 py-2 text-[14px] font-medium",
+                          isDarkMode ? "border-slate-700 bg-slate-800 text-slate-200" : "border-gray-200 bg-gray-50 text-gray-700"
+                        )}
+                      >
+                        <span>{sectionOrderLabelMap[sectionKey]}</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => moveSectionByIndex(index, 'up')}
+                            disabled={index === 0}
+                            className="rounded p-1 text-gray-500 hover:bg-gray-200 disabled:opacity-40"
+                            title="Move up"
+                          >
+                            <ArrowUp size={14} />
+                          </button>
+                          <button
+                            onClick={() => moveSectionByIndex(index, 'down')}
+                            disabled={index === orderedSections.length - 1}
+                            className="rounded p-1 text-gray-500 hover:bg-gray-200 disabled:opacity-40"
+                            title="Move down"
+                          >
+                            <ArrowDown size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <FormSection
+              title={labels.profilePicture || 'Profile Picture'}
+              icon={Camera}
+              isOpen={openSection === 'profile'}
               onToggle={() => toggleSection('profile')}
               isDarkMode={isDarkMode}
             >
@@ -327,9 +412,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
                 {data.profileImage && (
                   <div className="flex gap-3 flex-wrap justify-center">
-                    <button 
+                    <button
                       onClick={() => {
                         setTempProfileImage(data.profileImage || null);
+                        setCrop({ x: 0, y: 0 });
+                        setZoom(1.2);
+                        setCropShapeMode((data.customization.classicPersonalPhotoShape as 'circle' | 'square' | 'rectangle') || 'rectangle');
                         setIsCropping(true);
                       }}
                       className="text-[13px] flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 font-semibold bg-indigo-50 px-3 py-2 rounded-full transition-colors"
@@ -337,7 +425,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <CropIcon size={14} />
                       Crop / Edit
                     </button>
-                    <button 
+                    <button
                       onClick={() => onUpdateProfileImage(undefined)}
                       className="text-[13px] flex items-center gap-1.5 text-red-500 hover:text-red-700 font-semibold bg-red-50 px-3 py-2 rounded-full transition-colors"
                     >
@@ -355,10 +443,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </FormSection>
 
-            <FormSection 
-              title={labels.personalDetails} 
-              icon={User} 
-              isOpen={openSection === 'personal'} 
+            <FormSection
+              title={labels.personalDetails}
+              icon={User}
+              isOpen={openSection === 'personal'}
               onToggle={() => toggleSection('personal')}
               onAdd={() => onAddCustomField('personal')}
               isDarkMode={isDarkMode}
@@ -378,14 +466,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <InputField label={labels.contact} value={data.personal.contact} onChange={(e) => onUpdate('personal', 'contact', e.target.value)} placeholder="e.g. +1 234 567 890" onDelete={() => onUpdate('personal', 'contact', '')} />
               <InputField label={labels.email} type="email" value={data.personal.email} onChange={(e) => onUpdate('personal', 'email', e.target.value)} placeholder="e.g. john@example.com" onDelete={() => onUpdate('personal', 'email', '')} />
               <InputField label={labels.address} type="textarea" value={data.personal.address} onChange={(e) => onUpdate('personal', 'address', e.target.value)} placeholder="e.g. 123 Main St, City, Country" onDelete={() => onUpdate('personal', 'address', '')} />
-              
+
               {renderCustomFields('personal')}
             </FormSection>
 
-            <FormSection 
-              title={labels.familyBackground} 
-              icon={Users} 
-              isOpen={openSection === 'family'} 
+            <FormSection
+              title={labels.familyBackground}
+              icon={Users}
+              isOpen={openSection === 'family'}
               onToggle={() => toggleSection('family')}
               onAdd={() => onAddCustomField('family')}
               isDarkMode={isDarkMode}
@@ -397,14 +485,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <InputField label={labels.siblings} value={data.family.siblings} onChange={(e) => onUpdate('family', 'siblings', e.target.value)} placeholder="e.g. 1 Brother, 1 Sister" onDelete={() => onUpdate('family', 'siblings', '')} />
               <InputField label={labels.familyType} value={data.family.familyType} onChange={(e) => onUpdate('family', 'familyType', e.target.value)} placeholder="e.g. Nuclear / Joint" onDelete={() => onUpdate('family', 'familyType', '')} />
               <InputField label={labels.nativePlace} value={data.family.nativePlace} onChange={(e) => onUpdate('family', 'nativePlace', e.target.value)} onDelete={() => onUpdate('family', 'nativePlace', '')} />
-              
+
               {renderCustomFields('family')}
             </FormSection>
 
-            <FormSection 
-              title={labels.education} 
-              icon={GraduationCap} 
-              isOpen={openSection === 'education'} 
+            <FormSection
+              title={labels.education}
+              icon={GraduationCap}
+              isOpen={openSection === 'education'}
               onToggle={() => toggleSection('education')}
               onAdd={() => onAddCustomField('education')}
               isDarkMode={isDarkMode}
@@ -413,14 +501,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <InputField label={labels.college} value={data.education.college} onChange={(e) => onUpdate('education', 'college', e.target.value)} onDelete={() => onUpdate('education', 'college', '')} />
               <InputField label={labels.school} value={data.education.school} onChange={(e) => onUpdate('education', 'school', e.target.value)} onDelete={() => onUpdate('education', 'school', '')} />
               <InputField label={labels.skills} type="textarea" value={data.education.additionalSkills} onChange={(e) => onUpdate('education', 'additionalSkills', e.target.value)} onDelete={() => onUpdate('education', 'additionalSkills', '')} />
-              
+
               {renderCustomFields('education')}
             </FormSection>
 
-            <FormSection 
-              title={labels.professional} 
-              icon={Briefcase} 
-              isOpen={openSection === 'professional'} 
+            <FormSection
+              title={labels.professional}
+              icon={Briefcase}
+              isOpen={openSection === 'professional'}
               onToggle={() => toggleSection('professional')}
               onAdd={() => onAddCustomField('professional')}
               isDarkMode={isDarkMode}
@@ -429,7 +517,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <InputField label={labels.company} value={data.professional.company} onChange={(e) => onUpdate('professional', 'company', e.target.value)} onDelete={() => onUpdate('professional', 'company', '')} />
               <InputField label={labels.income} value={data.professional.income} onChange={(e) => onUpdate('professional', 'income', e.target.value)} placeholder="e.g. $80,000 / year" onDelete={() => onUpdate('professional', 'income', '')} />
               <InputField label={labels.experience} value={data.professional.experience} onChange={(e) => onUpdate('professional', 'experience', e.target.value)} placeholder="e.g. 5 Years" onDelete={() => onUpdate('professional', 'experience', '')} />
-              
+
               {renderCustomFields('professional')}
             </FormSection>
 
@@ -461,11 +549,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </FormSection>
           </div>
         ) : (
-          <CustomizationPanel 
-            data={data} 
+          <CustomizationPanel
+            data={data}
             labels={labels}
-            onUpdateCustomization={onUpdateCustomization} 
-            onToggleVisibility={onToggleVisibility} 
+            onUpdateCustomization={onUpdateCustomization}
+            onToggleVisibility={onToggleVisibility}
           />
         )}
       </div>
@@ -488,29 +576,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 image={tempProfileImage}
                 crop={crop}
                 zoom={zoom}
-                aspect={1}
+                aspect={cropShapeMode === 'rectangle' ? 3 / 4 : 1}
+                cropShape={cropShapeMode === 'circle' ? 'round' : 'rect'}
                 onCropChange={setCrop}
                 onCropComplete={onCropComplete}
                 onZoomChange={setZoom}
+                minZoom={1}
+                maxZoom={4}
               />
             </div>
-            <div className="p-4 bg-white border-t border-gray-200 flex justify-between items-center">
-              <div className="text-xs text-gray-500">
-                Drag to position, scroll to zoom
+            <div className="p-4 bg-white border-t border-gray-200 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-gray-600 uppercase">Shape</span>
+                {(['circle', 'square', 'rectangle'] as const).map((shape) => (
+                  <button
+                    key={shape}
+                    onClick={() => setCropShapeMode(shape)}
+                    className={clsx(
+                      "px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors",
+                      cropShapeMode === shape
+                        ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                        : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                    )}
+                  >
+                    {shape[0].toUpperCase() + shape.slice(1)}
+                  </button>
+                ))}
               </div>
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => setIsCropping(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleSaveCrop}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-colors"
-                >
-                  Save Photo
-                </button>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-gray-600 uppercase min-w-10">Zoom</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={4}
+                  step={0.1}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="flex-1"
+                />
+                <span className="text-xs text-gray-500 w-10 text-right">{zoom.toFixed(1)}x</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="text-xs text-gray-500">
+                  Drag image to reposition and use zoom to make photo larger
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsCropping(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveCrop}
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-colors"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </div>
           </div>
