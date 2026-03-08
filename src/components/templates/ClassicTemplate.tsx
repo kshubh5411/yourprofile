@@ -21,14 +21,14 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
     classicVariant = 'centered',
     classicFrameStyle = 'royal',
     classicHeaderText = 'ॐ श्री गणेशाय नमः',
-    classicHeaderIcon = 'Ganesha',
+    classicHeaderIcon = 'ganesha-4',
     classicHeaderPosition,
     classicPersonalPhotoShape = 'rectangle',
   } = customization;
   const fontClass = fontFamily === 'mono' ? 'font-doc-mono' : fontFamily === 'sans' ? 'font-doc-sans' : 'font-doc-serif';
   const headerNodeRef = useRef<HTMLDivElement>(null);
 
-  const topHeaderIcon = getGodLogoAsset(classicHeaderIcon || 'Ganesha');
+  const topHeaderIcon = getGodLogoAsset(classicHeaderIcon || 'ganesha-4');
   const defaultHeaderPosition =
     classicVariant === 'photo-left' ? { x: 250, y: 2 } : { x: 300, y: 2 };
   const makeWatermark = (borderPx: number, color: string, pattern = 'rings') => (
@@ -199,7 +199,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
     return (
       <div className="mb-4 flex justify-start">
         <div
-          className="pdf-safe-pill inline-flex px-6 py-1.5 rounded-full text-xl font-extrabold text-white leading-none whitespace-nowrap"
+          className="pdf-safe-pill inline-flex items-center gap-2 px-6 py-1.5 rounded-full text-xl font-extrabold text-white leading-none whitespace-nowrap"
           style={{
             backgroundColor: primaryColor,
             fontFamily: 'Arial, Helvetica, sans-serif',
@@ -208,8 +208,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
           }}
         >
           {safeWords.map((word, index) => (
-            <span key={`${word}-${index}`} className="pdf-safe-pill-word">
-              {index > 0 ? '\u00A0' : ''}
+            <span key={`${word}-${index}`} className="pdf-safe-pill-word" style={{ lineHeight: 1 }}>
               {word}
             </span>
           ))}
@@ -236,7 +235,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
         />
       )}
       {framePreset.watermark}
-      <div className="relative mb-6 border-b-2 pb-3 min-h-[108px]" style={{ borderColor: primaryColor }}>
+      <div className="classic-header-shell relative z-10 mb-6 border-b-2 pb-3 min-h-[108px]" style={{ borderColor: primaryColor }}>
         <Draggable
           nodeRef={headerNodeRef}
           bounds="parent"
@@ -245,17 +244,28 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ data, labels, classNa
             updateCustomization('classicHeaderPosition', { x: dragData.x, y: dragData.y });
           }}
         >
-          <div ref={headerNodeRef} className="absolute cursor-move touch-none z-20 text-center min-w-[180px]">
-            {topHeaderIcon && <img src={topHeaderIcon} alt="Top icon" className="w-12 h-12 object-contain mb-1 mx-auto" />}
-            <h1 className="text-lg font-semibold tracking-wide" style={{ color: primaryColor }}>
-              {classicHeaderText || 'ॐ श्री गणेशाय नमः'}
-            </h1>
+          <div ref={headerNodeRef} className="classic-header-draggable absolute cursor-move touch-none z-20 text-center min-w-[180px]">
+            {topHeaderIcon && (
+              <img
+                src={topHeaderIcon}
+                alt="Top icon"
+                loading="eager"
+                decoding="sync"
+                crossOrigin="anonymous"
+                className="w-12 h-12 object-contain mb-1 mx-auto"
+              />
+            )}
+            {classicHeaderText?.trim() && (
+              <h1 className="text-lg font-semibold tracking-wide" style={{ color: primaryColor }}>
+                {classicHeaderText}
+              </h1>
+            )}
           </div>
         </Draggable>
 
       </div>
 
-      <div className="space-y-6">
+      <div className="relative z-10 space-y-6">
         {/* Personal Details */}
         {sectionVisibility.personal && (
           <section>

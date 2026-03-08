@@ -297,7 +297,7 @@ export const useBioData = () => {
         classicVariant: data.customization.classicVariant || 'centered',
         classicFrameStyle: data.customization.classicFrameStyle || 'royal',
         classicHeaderText: data.customization.classicHeaderText || 'ॐ श्री गणेशाय नमः',
-        classicHeaderIcon: data.customization.classicHeaderIcon || 'Ganesha',
+        classicHeaderIcon: data.customization.classicHeaderIcon || 'ganesha-4',
         classicHeaderPosition: data.customization.classicHeaderPosition,
         classicPhotoPosition: data.customization.classicPhotoPosition,
         classicPersonalPhotoShape: data.customization.classicPersonalPhotoShape || 'rectangle',

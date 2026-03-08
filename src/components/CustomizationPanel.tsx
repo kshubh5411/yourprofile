@@ -2,6 +2,7 @@ import React from 'react';
 import { Biodata } from '../types';
 import { TranslationLabels } from '../constants/translations';
 import { Palette, Type, Eye } from 'lucide-react';
+import { topIconOptions } from '../constants/godLogos';
 
 interface CustomizationPanelProps {
   data: Biodata;
@@ -17,6 +18,7 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
   onToggleVisibility,
 }) => {
   const [showAllFrames, setShowAllFrames] = React.useState(false);
+  const [showAllIcons, setShowAllIcons] = React.useState(false);
   const sectionLabelMap: Record<string, string> = {
     personal: labels.personalDetails,
     family: labels.familyBackground,
@@ -67,6 +69,15 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
     { value: 'charcoal-modern', name: 'Charcoal Modern' },
     { value: 'lotus-heritage', name: 'Lotus Heritage' },
   ];
+  const featuredIconIds = ['ganesha-4', 'waheguru', 'christ', 'allah-1'];
+  const featuredIcons = featuredIconIds
+    .map((id) => topIconOptions.find((icon) => icon.id === id))
+    .filter(Boolean) as { id: string; src: string }[];
+  const remainingIcons = topIconOptions.filter(
+    (icon) => !featuredIcons.some((featured) => featured.id === icon.id)
+  );
+  const orderedIcons = [...featuredIcons, ...remainingIcons];
+  const visibleIcons = showAllIcons ? orderedIcons : featuredIcons;
   const framePreviewStyles: Record<string, { outer: string; inner: string; base: string; watermark?: string; pill: string }> = {
     royal: {
       outer: 'border-[3px] border-amber-700',
@@ -256,6 +267,65 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
 
       {data.templateId === 'classic' && (
         <div>
+          <div className="flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700">
+            <Type size={16} />
+            <span>Classic Header</span>
+          </div>
+          <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3 mb-4">
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-600 mb-1">Top Text</label>
+              <input
+                type="text"
+                value={data.customization.classicHeaderText || ''}
+                onChange={(e) => onUpdateCustomization('classicHeaderText', e.target.value)}
+                placeholder="e.g. ॐ श्री गणेशाय नमः"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[14px] focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-600 mb-1">Top Icon</label>
+              <div className="grid grid-cols-4 gap-2">
+                {visibleIcons.map((icon) => {
+                  const selected = (data.customization.classicHeaderIcon || 'ganesha-4') === icon.id;
+                  return (
+                    <button
+                      key={icon.id}
+                      onClick={() => onUpdateCustomization('classicHeaderIcon', icon.id)}
+                      className={`rounded-lg border p-1.5 transition-colors ${
+                        selected
+                          ? 'border-indigo-600 bg-indigo-50'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                      }`}
+                      title={icon.id}
+                    >
+                      <img src={icon.src} alt={icon.id} className="h-10 w-full rounded object-contain bg-white" />
+                    </button>
+                  );
+                })}
+              </div>
+              {orderedIcons.length > featuredIcons.length && (
+                <button
+                  onClick={() => setShowAllIcons((prev) => !prev)}
+                  className="mt-2 text-[13px] text-indigo-600 hover:text-indigo-800 font-semibold"
+                >
+                  {showAllIcons ? 'Show less' : 'See more'}
+                </button>
+              )}
+              <button
+                onClick={() => onUpdateCustomization('classicHeaderIcon', 'none')}
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-100"
+              >
+                Remove Icon
+              </button>
+            </div>
+            <button
+              onClick={() => onUpdateCustomization('classicHeaderPosition', undefined)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-100"
+            >
+              Reset Header Position
+            </button>
+          </div>
+
           <div className="flex items-center gap-2 mb-3 text-[13px] font-bold text-gray-700">
             <Type size={16} />
             <span>Frame Style</span>
