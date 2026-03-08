@@ -11,26 +11,26 @@ import { jsPDF } from 'jspdf';
 import { createShareLink, getSharedBiodata } from './services/share';
 
 export default function App() {
-  const { 
-    data, 
+  const {
+    data,
     labels,
-    updateField, 
+    updateField,
     addCustomField,
     removeCustomField,
     updateCustomField,
-    setTemplate, 
+    setTemplate,
     setCountry,
-    setLanguage, 
-    handleAiEnhance, 
+    setLanguage,
+    handleAiEnhance,
     handleGeneratePartnerPreferences,
-    loadSampleData, 
+    loadSampleData,
     replaceData,
     updateCustomization,
     toggleSectionVisibility,
     updateProfileImage,
-    isGenerating, 
+    isGenerating,
     isGeneratingPartnerPreferences,
-    error 
+    error
   } = useBioData();
   const componentRef = useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -415,7 +415,7 @@ export default function App() {
         isDarkMode ? "text-slate-300 bg-slate-900/80" : "text-slate-600 bg-white/90 border border-slate-200"
       )}
     >
-      Made by Shubham at bottom with love
+      Made by Shubham with love ❤️
     </div>
   );
 
@@ -726,24 +726,24 @@ export default function App() {
         >
           {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
-        
+
         <div className={clsx("flex-1 overflow-y-auto", isSidebarCollapsed && "hidden lg:block")}>
           {!isSidebarCollapsed ? (
-          <Sidebar 
-            data={data} 
-            labels={labels}
-            isDarkMode={isDarkMode}
-            onUpdate={updateField} 
-            onAddCustomField={addCustomField}
-            onRemoveCustomField={removeCustomField}
-            onUpdateCustomField={updateCustomField}
-            onLoadSample={loadSampleData}
-            onGeneratePartnerPreferences={handleGeneratePartnerPreferences}
-            onUpdateCustomization={updateCustomization}
-            onToggleVisibility={toggleSectionVisibility}
-            onUpdateProfileImage={updateProfileImage}
-            isGeneratingPartnerPreferences={isGeneratingPartnerPreferences}
-          />
+            <Sidebar
+              data={data}
+              labels={labels}
+              isDarkMode={isDarkMode}
+              onUpdate={updateField}
+              onAddCustomField={addCustomField}
+              onRemoveCustomField={removeCustomField}
+              onUpdateCustomField={updateCustomField}
+              onLoadSample={loadSampleData}
+              onGeneratePartnerPreferences={handleGeneratePartnerPreferences}
+              onUpdateCustomization={updateCustomization}
+              onToggleVisibility={toggleSectionVisibility}
+              onUpdateProfileImage={updateProfileImage}
+              isGeneratingPartnerPreferences={isGeneratingPartnerPreferences}
+            />
           ) : (
             <div className={clsx("hidden lg:flex h-full flex-col items-center pt-4 gap-3", isDarkMode ? 'text-slate-300' : 'text-gray-500')}>
               <div className={clsx("h-9 w-9 rounded-xl border flex items-center justify-center", isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50')}>
@@ -957,12 +957,12 @@ export default function App() {
         {/* Preview Area */}
         <div className={clsx("flex-1 min-h-[65vh] lg:min-h-0 overflow-hidden relative print:overflow-visible print:bg-white print:absolute print:inset-0 print:z-50", isDarkMode ? 'bg-slate-950' : 'bg-slate-100')}>
           <div className="absolute inset-0 overflow-auto p-0 print:static print:overflow-visible print:p-0">
-             <Preview 
-              ref={componentRef} 
-              data={data} 
-              templateId={data.templateId} 
+            <Preview
+              ref={componentRef}
+              data={data}
+              templateId={data.templateId}
               labels={labels}
-              updateCustomization={updateCustomization} 
+              updateCustomization={updateCustomization}
             />
           </div>
         </div>
