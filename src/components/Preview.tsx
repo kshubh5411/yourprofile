@@ -27,7 +27,14 @@ export const Preview = React.forwardRef<HTMLDivElement, PreviewProps>(({ data, t
   };
 
   return (
-    <div className="w-full h-full bg-gray-100 p-2 sm:p-4 lg:p-8 overflow-auto flex justify-center items-start print:p-0 print:bg-white print:block">
+    <div
+      className="w-full h-full p-2 sm:p-4 lg:p-8 overflow-auto flex justify-center items-start print:p-0 print:bg-white print:block"
+      style={{
+        backgroundColor: '#f1f5f9',
+        backgroundImage: 'radial-gradient(rgba(100, 116, 139, 0.22) 1px, transparent 1px)',
+        backgroundSize: '12px 12px',
+      }}
+    >
       <div 
         ref={ref}
         data-preview-container="true"

@@ -168,7 +168,7 @@ export const initialBiodata: Biodata = {
     classicVariant: 'centered',
     classicFrameStyle: 'royal',
     classicHeaderText: 'ॐ श्री गणेशाय नमः',
-    classicHeaderIcon: 'Ganesha',
+    classicHeaderIcon: 'ganesha-4',
     classicHeaderPosition: undefined,
     classicPhotoPosition: undefined,
     classicPersonalPhotoShape: 'rectangle',

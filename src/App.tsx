@@ -63,91 +63,99 @@ export default function App() {
     setIsPrinting(true);
     try {
       const element = componentRef.current;
+      await document.fonts.ready;
 
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher scale for better quality
-        useCORS: true, // To handle images from external domains
-        logging: false,
-        backgroundColor: '#ffffff', // Ensure white background
-        onclone: (clonedDoc) => {
-          // 1. Handle print visibility classes manually
-          // Hide elements with 'print:hidden'
-          const printHidden = clonedDoc.querySelectorAll('.print\\:hidden');
-          printHidden.forEach((el) => {
-            (el as HTMLElement).style.display = 'none';
-          });
+      const sandbox = document.createElement('div');
+      sandbox.setAttribute('data-pdf-sandbox', 'true');
+      sandbox.style.position = 'fixed';
+      sandbox.style.left = '-100000px';
+      sandbox.style.top = '0';
+      sandbox.style.width = '210mm';
+      sandbox.style.background = '#ffffff';
+      sandbox.style.zIndex = '-1';
+      sandbox.style.pointerEvents = 'none';
 
-          // Show elements with 'print:block' (assuming they might be hidden)
-          const printBlock = clonedDoc.querySelectorAll('.print\\:block');
-          printBlock.forEach((el) => {
-             (el as HTMLElement).style.display = 'block';
-          });
-          
-           // Show elements with 'print:flex'
-          const printFlex = clonedDoc.querySelectorAll('.print\\:flex');
-          printFlex.forEach((el) => {
-             (el as HTMLElement).style.display = 'flex';
-          });
+      const exportElement = element.cloneNode(true) as HTMLElement;
+      exportElement.style.width = '210mm';
+      exportElement.style.maxWidth = '210mm';
+      exportElement.style.minHeight = '297mm';
+      exportElement.style.margin = '0';
+      exportElement.style.transform = 'none';
+      exportElement.style.boxShadow = 'none';
+      exportElement.style.background = '#ffffff';
+      sandbox.appendChild(exportElement);
+      document.body.appendChild(sandbox);
 
-          // 2. Remove shadows from all elements to prevent color parsing issues
-          const allElements = clonedDoc.querySelectorAll('*');
-          allElements.forEach((el) => {
-            const style = (el as HTMLElement).style;
-            if (style) {
-              style.boxShadow = 'none';
-              style.textShadow = 'none';
-              style.filter = 'none';
-            }
-          });
-
-          // 3. Specific fix for the container
-          const clonedElement = clonedDoc.querySelector('.bg-white.shadow-2xl');
-          if (clonedElement) {
-            (clonedElement as HTMLElement).style.transform = 'none';
-            (clonedElement as HTMLElement).style.boxShadow = 'none';
-          }
-
-          // 4. Sanitize colors (oklab/color-mix fix)
-          const sanitizeElementColors = (el: HTMLElement) => {
-            const style = el.style;
-            const props = ['backgroundColor', 'color', 'borderColor', 'outlineColor'] as const;
-            
-            props.forEach(prop => {
-              if (style[prop] && (style[prop].includes('oklab') || style[prop].includes('color-mix'))) {
-                style[prop] = prop === 'color' || prop === 'borderColor' ? '#000000' : '#ffffff';
-              }
-            });
-          };
-
-          allElements.forEach((el) => {
-            sanitizeElementColors(el as HTMLElement);
-          });
-
-          // 5. Force stable font rendering for section pills in exported PDF
-          const pdfSafePills = clonedDoc.querySelectorAll('.pdf-safe-pill');
-          pdfSafePills.forEach((el) => {
-            const style = (el as HTMLElement).style;
-            style.fontFamily = 'Arial, Helvetica, sans-serif';
-            style.letterSpacing = '0';
-            style.fontKerning = 'none';
-            style.fontVariantLigatures = 'none';
-            style.fontFeatureSettings = '"kern" 0, "liga" 0, "clig" 0';
-            style.fontWeight = '800';
-            style.textTransform = 'none';
-            style.wordSpacing = '0';
-            style.whiteSpace = 'nowrap';
-          });
-
-          const pdfSafeWords = clonedDoc.querySelectorAll('.pdf-safe-pill-word');
-          pdfSafeWords.forEach((el) => {
-            const style = (el as HTMLElement).style;
-            style.display = 'inline-block';
-            style.letterSpacing = '0';
-            style.wordSpacing = '0';
-          });
-
-        }
+      const allElements = exportElement.querySelectorAll('*');
+      allElements.forEach((el) => {
+        const style = (el as HTMLElement).style;
+        style.boxShadow = 'none';
+        style.textShadow = 'none';
+        style.filter = 'none';
       });
+
+      const pdfSafePills = exportElement.querySelectorAll('.pdf-safe-pill');
+      pdfSafePills.forEach((el) => {
+        const style = (el as HTMLElement).style;
+        style.fontFamily = 'Arial, Helvetica, sans-serif';
+        style.letterSpacing = '0';
+        style.fontKerning = 'none';
+        style.fontVariantLigatures = 'none';
+        style.fontFeatureSettings = '"kern" 0, "liga" 0, "clig" 0';
+        style.fontWeight = '800';
+        style.textTransform = 'none';
+        style.wordSpacing = '0';
+        style.whiteSpace = 'nowrap';
+      });
+
+      const pdfSafeWords = exportElement.querySelectorAll('.pdf-safe-pill-word');
+      pdfSafeWords.forEach((el) => {
+        const style = (el as HTMLElement).style;
+        style.display = 'inline-block';
+        style.letterSpacing = '0';
+        style.wordSpacing = '0';
+      });
+
+      const classicHeaderShells = exportElement.querySelectorAll('.classic-header-shell');
+      classicHeaderShells.forEach((el) => {
+        (el as HTMLElement).style.minHeight = '108px';
+      });
+      const classicHeaderBlocks = exportElement.querySelectorAll('.classic-header-draggable');
+      classicHeaderBlocks.forEach((el) => {
+        const style = (el as HTMLElement).style;
+        style.position = 'relative';
+        style.left = '0';
+        style.top = '0';
+        style.transform = 'none';
+        style.marginLeft = 'auto';
+        style.marginRight = 'auto';
+        style.textAlign = 'center';
+      });
+
+      const images = Array.from(exportElement.querySelectorAll('img')) as HTMLImageElement[];
+      await Promise.all(
+        images.map((img) => {
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+          return new Promise<void>((resolve) => {
+            const done = () => resolve();
+            img.addEventListener('load', done, { once: true });
+            img.addEventListener('error', done, { once: true });
+          });
+        })
+      );
+
+      const canvas = await html2canvas(exportElement, {
+        scale: 3,
+        useCORS: true,
+        imageTimeout: 20000,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: exportElement.scrollWidth,
+        height: exportElement.scrollHeight,
+        windowWidth: exportElement.scrollWidth,
+        windowHeight: exportElement.scrollHeight,
+      });
+      document.body.removeChild(sandbox);
       
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -174,6 +182,10 @@ export default function App() {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
     } finally {
+      const leftoverSandbox = document.querySelector('[data-pdf-sandbox="true"]');
+      if (leftoverSandbox?.parentElement) {
+        leftoverSandbox.parentElement.removeChild(leftoverSandbox);
+      }
       setIsPrinting(false);
     }
   };
